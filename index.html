@@ -71,7 +71,7 @@
   .tool .pill.primary { flex: 1 1 auto; min-height: 42px; font-size: 16px; }
   .ghost-pill:disabled { color: var(--muted); border-color: var(--line); background: transparent; cursor: not-allowed; }
   .preview { border-radius: 12px; overflow: hidden; }
-  .preview img { display: block; width: 100%; max-height: 340px; object-fit: contain; background: var(--page); border-radius: 12px; }
+  .preview img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; background: var(--page); border-radius: 12px; }
 
   /* result */
   section.block { padding: clamp(24px, 3vw, 36px) 0 0; display: flex; flex-direction: column; gap: 18px; }
@@ -127,6 +127,7 @@
   .multi .chips { flex-direction: column; align-items: flex-start; }
   .multi .chips li { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.35); color: #fff; }
   .multi.special { background: var(--head); }
+  .multi.clear { background: var(--accent); }
   .note-band { flex: 1 1 auto; background: var(--tier-low); border-top: 1px solid var(--tier-line); padding: 16px clamp(18px, 2vw, 24px); }
   .note { margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted); }
   .note b { color: var(--ink); font-weight: 800; }
@@ -206,6 +207,8 @@
           <ul class="chips"><li data-t="Nimbostratus">Nimbostratus</li><li data-t="Towering Cumulus">Towering Cumulus</li><li data-t="Cumulonimbus">Cumulonimbus</li></ul></div>
         <div class="multi special"><b>Special feature</b>
           <ul class="chips"><li data-f="fallstreak_hole">Fallstreak hole (hole punch cloud)</li></ul></div>
+        <div class="multi clear"><b>No clouds</b>
+          <ul class="chips"><li data-c="clear">Clear sky</li></ul></div>
       </div>
     </div>
   </section>
@@ -254,14 +257,15 @@ function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "
 function p2(n) { return (n < 10 ? "0" : "") + n; }
 function confHtml(c) { var L = { high: "high confidence", medium: "medium confidence", low: "low confidence" }[c]; return L ? '<span class="conf ' + c + '"><span class="dots"><i></i><i></i><i></i></span>' + L + "</span>" : ""; }
 function featureName(fe) { return FEATURE[fe.type] || String(fe.type).replace(/_/g, " "); }
-function highlight(types) {
+function highlight(types, isResult) {
   document.querySelectorAll(".chips li[data-t]").forEach(function (el) { el.classList.toggle("hit", types.indexOf(el.getAttribute("data-t")) !== -1); });
   document.querySelectorAll(".chips li[data-f]").forEach(function (el) { el.classList.toggle("hit", !!(types.length && lastFeature && lastFeature.type === el.getAttribute("data-f"))); });
+  document.querySelectorAll(".chips li[data-c]").forEach(function (el) { el.classList.toggle("hit", !!isResult && !types.length); });
 }
 
 function cardsHtml() {
   var h = "";
-  if (!lastTypes.length) h += '<article class="card"><h3>Clear sky</h3><p>No cloud types identified.</p></article>';
+  if (!lastTypes.length) h += '<article class="card"><div class="row"><p class="eyebrow">No clouds</p></div><h3>Clear sky</h3><p>No cloud types identified in this photo.</p></article>';
   lastTypes.forEach(function (t) {
     var i = INFO[t] || { tier: "Cloud", text: "", form: "", alt: "" };
     h += '<article class="card"><div class="row"><p class="eyebrow">' + esc(i.tier) + "</p>" + confHtml(lastConf[t]) + "</div><h3>" + esc(t) + "</h3>" +
@@ -291,7 +295,7 @@ function render() {
   $("pdf-btn").addEventListener("click", downloadPdf);
   $("email-btn").addEventListener("click", function () { shareReport("email"); });
   $("text-btn").addEventListener("click", function () { shareReport("text"); });
-  highlight(lastTypes);
+  highlight(lastTypes, true);
 }
 
 /* photo in */
