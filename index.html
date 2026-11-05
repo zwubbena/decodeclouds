@@ -344,7 +344,7 @@ go.addEventListener("click", function () {
   go.disabled = true; go.textContent = "Identifying…"; block.hidden = false;
   result.innerHTML = '<p class="loading">Reading the sky&hellip; usually 5 to 15 seconds.</p>';
   fetch(WORKER_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ image: b64, mediaType: mime }) })
-    .then(function (r) { return r.json(); })
+    .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, data: j }; }, function () { return { ok: r.ok, data: {} }; }); })
     .then(function (res) {
       go.disabled = false; go.textContent = "Identify clouds";
       if (!res || !res.ok) { result.innerHTML = '<p class="err">' + esc((res && res.data && res.data.message) || "Couldn’t read that one. Try another photo.") + "</p>"; return; }
