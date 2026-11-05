@@ -20,7 +20,7 @@
   /* decodeclouds.com — plain HTML/CSS/JS. Values follow the Main.dc / Phone.dc design mockups. */
   :root {
     --page: #F1F5F9; --card: #FFFFFF; --line: #D2DAE2; --line-2: #A2B5C9;
-    --go: #23763F; --go-light: #9BE7B1;
+    --go: #23763F;
     --accent: #2D63A6; --head: #1F4E86; --ink: #17263A; --ink-2: #24364B; --soft: #3E5470; --muted: #4E5F73; --band-sub: #2E4560;
     --tier-high: #C6D9EE; --tier-mid: #DCE7F3; --tier-low: #EEF3F9; --tier-line: #C3D5E8; --multi: #314C6C;
     --foot: #DCE5EE; --foot-2: #C9D6E3; --chip: #FFFFFF;
@@ -81,15 +81,14 @@
   .card .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .card h3 { margin: 0; font-family: var(--display); font-variation-settings: var(--wonk); font-size: clamp(24px, 2.4vw, 30px); font-weight: 500; letter-spacing: -.02em; line-height: 1.1; color: var(--head); }
   .card p { margin: 0; font-size: 16px; line-height: 1.5; color: var(--ink-2); }
-  .conf { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--head); }
+  .conf { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--head); background: var(--page); padding: 4px 10px 4px 8px; border-radius: 999px; }
   .conf .dots { display: flex; gap: 4px; } .conf .dots i { width: 9px; height: 9px; border-radius: 999px; background: transparent; box-shadow: inset 0 0 0 1.5px var(--go); display: block; }
   .conf.high .dots i, .conf.medium .dots i:nth-child(-n+2), .conf.low .dots i:first-child { background: var(--go); }
   .details { display: flex; flex-direction: column; gap: 6px; padding-top: 10px; border-top: 1px solid var(--line); }
   .details dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; font-size: 15px; }
   .details dt { font-weight: 800; } .details dd { margin: 0; color: var(--ink-2); }
   .card.feature { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 24px 50px -28px rgba(45,99,166,.7); }
-  .card.feature .eyebrow, .card.feature .conf { color: #E2ECF7; } .card.feature .conf .dots i { box-shadow: inset 0 0 0 1.5px var(--go-light); }
-  .card.feature .conf.high .dots i, .card.feature .conf.medium .dots i:nth-child(-n+2), .card.feature .conf.low .dots i:first-child { background: var(--go-light); }
+  .card.feature .eyebrow { color: #E2ECF7; } .card.feature .conf { background: #fff; }
   .card.feature h3 { color: #fff; }
   .card.feature h3 small { font-weight: 300; color: #E2ECF7; font-size: .68em; display: block; margin-top: 2px; }
   .card.feature p { color: #fff; }
