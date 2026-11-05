@@ -1,0 +1,9 @@
+# backend lives outside this repo (deployed with Wrangler; its key is a Cloudflare secret)
+worker/
+# never commit secrets
+.dev.vars
+.env*
+# local test photos and notes
+data/
+NOTES.md
+.DS_Store

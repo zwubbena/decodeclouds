@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DecodeClouds: Cloud Decoder</title>
+<link rel="canonical" href="https://decodeclouds.com/" />
+<meta name="description" content="Take a photo of the sky to identify the cloud. Free, no account, your photo isn't kept." />
+<meta property="og:title" content="DecodeClouds: Cloud Decoder" />
+<meta property="og:description" content="Take a photo of the sky to identify the cloud." />
+<meta property="og:url" content="https://decodeclouds.com/" />
+<meta property="og:type" content="website" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,300..600&amp;family=Nunito:wght@400;600;700;800&amp;display=swap" rel="stylesheet" />
+<style>
+  /* decodeclouds.com — plain HTML/CSS/JS. Values follow the Main.dc / Phone.dc design mockups. */
+  :root {
+    --page: #F1F5F9; --card: #FFFFFF; --line: #D2DAE2; --line-2: #A2B5C9;
+    --accent: #2D63A6; --head: #1F4E86; --ink: #17263A; --ink-2: #24364B; --soft: #3E5470; --muted: #4E5F73; --band-sub: #2E4560;
+    --tier-high: #C6D9EE; --tier-mid: #DCE7F3; --tier-low: #EEF3F9; --tier-line: #C3D5E8; --multi: #314C6C;
+    --foot: #DCE5EE; --foot-2: #C9D6E3; --chip: #FFFFFF;
+    --sky: linear-gradient(180deg, #2A5C9C 0%, #3A6DB0 42%, #7FA4CF 72%, #C3D5E8 90%, var(--page) 100%);
+    --display: "Source Serif 4", Georgia, serif; --wonk: normal; --body: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; font-family: var(--body); color: var(--ink); background: var(--page); line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  a { color: var(--head); } a:hover { color: var(--ink); }
+  [hidden] { display: none !important; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 48px); }
+  .eyebrow { font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--soft); margin: 0; }
+  button, label.btn { font-family: var(--body); cursor: pointer; }
+  .pill { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 0 18px; border-radius: 999px; border: 1.5px solid var(--line-2); background: var(--page); color: var(--ink); font-weight: 700; font-size: 15px; }
+  .pill.primary { border: 0; background: var(--accent); color: #fff; font-weight: 800; font-size: 17px; min-height: 46px; padding: 0 26px; }
+  .pill.primary:disabled { background: var(--line); color: var(--muted); cursor: not-allowed; }
+  .pill.white { background: var(--card); }
+  .ghost { border: 0; background: transparent; color: var(--soft); font-weight: 700; font-size: 15px; min-height: 44px; padding: 0 8px; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  /* sky: header + hero on one gradient */
+  .sky { background: var(--sky); color: #fff; }
+  header.top { height: 68px; display: flex; align-items: center; }
+  .mark { font-family: var(--display); font-variation-settings: var(--wonk); font-size: clamp(24px, 3vw, 28px); font-weight: 300; color: #fff; text-decoration: none; letter-spacing: -.01em; }
+  .mark:hover { color: #fff; } .mark b { font-weight: 600; }
+  .hero { padding-top: clamp(24px, 4vw, 48px); padding-bottom: clamp(36px, 5vw, 64px); display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(24px, 5vw, 64px); align-items: start; }
+  .hero > * { min-width: 0; }
+  @media (min-width: 900px) { .hero { display: flex; align-items: flex-start; gap: clamp(28px, 3vw, 44px); } .hero-text { flex: 0 0 auto; max-width: 48%; } .tool { flex: 0 0 auto; width: min(460px, 100%); } }
+  .hero-text { display: flex; flex-direction: column; gap: 14px; }
+  h1 { margin: 0; font-family: var(--display); font-variation-settings: var(--wonk); font-size: clamp(64px, 9.5vw, 128px); font-weight: 300; line-height: .98; letter-spacing: -.035em; }
+  h1 b { font-weight: 500; }
+  .lede { margin: 0; font-size: 18px; color: #fff; }
+
+  .tool { background: var(--card); color: var(--ink); border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 40px 80px -30px rgba(23,38,58,.45); }
+  input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+  .drop { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; padding: 16px 14px; border: 2px dashed var(--line-2); border-radius: 18px; background: var(--page); color: var(--accent); cursor: pointer; transition: background .15s, border-color .15s; }
+  .drop:hover, .drop.over { background: #E6EFF9; border-color: var(--accent); }
+  .drop-title { font-size: 15px; font-weight: 800; color: var(--ink); margin-top: 2px; }
+  .drop-title u { color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+  .drop-hint { font-size: 12px; color: var(--muted); }
+  .is-touch { display: none; } @media (hover: none) and (pointer: coarse) { .is-touch { display: inline; } .is-desktop { display: none; } }
+  .file-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 4px 0; }
+  .fname { font-size: 13px; color: var(--muted); min-width: 0; overflow-wrap: anywhere; }
+  .ghost { min-height: 32px; }
+  .act { display: flex; gap: 10px; align-items: center; }
+  .tool .pill.primary { flex: 1 1 auto; min-height: 42px; font-size: 16px; }
+  .ghost-pill:disabled { color: var(--muted); border-color: var(--line); background: transparent; cursor: not-allowed; }
+  .preview { border-radius: 18px; overflow: hidden; }
+  .preview img { display: block; width: 100%; max-height: 340px; object-fit: contain; background: #000; border-radius: 18px; }
+
+  /* result */
+  section.block { padding: clamp(28px, 4vw, 44px) 0 0; display: flex; flex-direction: column; gap: 18px; }
+  section.block h2 { margin: 0; font-family: var(--display); font-variation-settings: var(--wonk); font-size: clamp(28px, 3vw, 38px); font-weight: 400; letter-spacing: -.025em; line-height: 1.05; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(440px, 100%), 1fr)); gap: 16px; margin-bottom: 16px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 28px; padding: clamp(22px, 3vw, 36px); display: flex; flex-direction: column; gap: 14px; box-shadow: 0 24px 50px -32px rgba(45,99,166,.45); }
+  .card .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .card h3 { margin: 0; font-family: var(--display); font-variation-settings: var(--wonk); font-size: clamp(40px, 4.4vw, 56px); font-weight: 500; letter-spacing: -.03em; line-height: 1.02; color: var(--head); }
+  .card p { margin: 0; font-size: 18px; color: var(--ink-2); }
+  .conf { display: inline-flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; color: var(--head); }
+  .conf .dots { display: flex; gap: 4px; } .conf .dots i { width: 10px; height: 10px; border-radius: 999px; background: var(--accent); display: block; opacity: .22; }
+  .conf.high .dots i { opacity: 1; } .conf.medium .dots i:nth-child(-n+2) { opacity: 1; } .conf.low .dots i:first-child { opacity: 1; }
+  .details { display: flex; flex-direction: column; gap: 12px; }
+  .details dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 10px 20px; font-size: 17px; }
+  .details dt { font-weight: 800; } .details dd { margin: 0; color: var(--ink-2); }
+  .card.feature { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 24px 50px -28px rgba(45,99,166,.7); }
+  .card.feature .eyebrow, .card.feature .conf { color: #E2ECF7; } .card.feature .conf .dots i { background: #fff; }
+  .card.feature h3 { color: #fff; font-size: clamp(34px, 3.6vw, 46px); letter-spacing: -.025em; }
+  .card.feature h3 small { font-weight: 300; color: #E2ECF7; font-size: .7em; display: block; }
+  .card.feature p { color: #fff; }
+  details.how { background: var(--card); border: 1px solid var(--line); border-radius: 20px; }
+  details.how summary { padding: 16px 24px; display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 16px; color: var(--head); cursor: pointer; list-style: none; }
+  details.how summary::-webkit-details-marker { display: none; }
+  details.how summary::before { content: "+"; width: 16px; color: var(--accent); font-size: 20px; line-height: 1; }
+  details.how[open] summary::before { content: "\2013"; }
+  details.how ul { margin: 0; padding: 0 24px 24px 52px; font-size: 16px; color: var(--muted); }
+  .actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 16px; }
+  .ghost-pill { margin-left: auto; border-color: #E3B4B4; background: transparent; color: #A32D2D; }
+  .ghost-pill:hover { background: #FCEBEB; border-color: #A32D2D; }
+  .share-hint { margin: 0; font-size: 13px; color: var(--muted); }
+  .err { color: #a32d2d; background: #fcebeb; border-radius: 14px; padding: 12px 16px; font-size: 16px; }
+  .loading { color: var(--muted); font-size: 17px; margin: 0; }
+
+  /* cloud types */
+  .tiers-wrap { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: stretch; }
+  @media (min-width: 900px) { .tiers-wrap { grid-template-columns: minmax(0, 1fr) max-content; } .side { max-width: 380px; } }
+  .tiers { min-width: 0; border: 1px solid var(--tier-line); border-radius: 28px; overflow: hidden; display: flex; flex-direction: column; }
+  .band { padding: 20px clamp(20px, 3vw, 32px); display: flex; align-items: center; gap: 16px 32px; flex-wrap: wrap; }
+  .band.high { background: var(--tier-high); } .band.mid { background: var(--tier-mid); } .band.low { background: var(--tier-low); }
+  .band .th { display: flex; flex-direction: column; gap: 2px; min-width: 150px; }
+  .band .th b { font-size: 14px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+  .band .th span { font-size: 14px; font-weight: 600; color: var(--band-sub); }
+  .chips { margin: 0; padding: 0; list-style: none; display: flex; gap: 10px; flex-wrap: wrap; }
+  .chips li { padding: 0 20px; min-height: 42px; border-radius: 999px; background: var(--chip); display: inline-flex; align-items: center; font-size: 16px; font-weight: 600; border: 1px solid transparent; }
+  .band.low .chips li { border-color: var(--line); }
+  .chips li.hit { background: var(--accent); color: #fff; font-weight: 800; }
+  .side { display: flex; flex-direction: column; gap: 16px; }
+  .multi { flex: 1 1 auto; min-width: 0; background: var(--multi); color: #fff; border-radius: 24px; padding: 20px 22px; display: flex; flex-direction: column; gap: 18px; }
+  .multi b { font-size: 14px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+  .multi .chips { flex-direction: column; align-items: flex-start; }
+  .multi .chips li { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.35); color: #fff; }
+  .multi .chips li.hit { background: var(--accent); border-color: var(--accent); }
+  .multi.special { background: var(--head); }
+  .note-band { flex: 1 1 auto; background: var(--tier-low); border-top: 1px solid var(--tier-line); padding: 16px clamp(20px, 3vw, 32px); }
+  .note { margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted); }
+  .note b { color: var(--ink); font-weight: 800; }
+
+  footer { margin: clamp(44px, 6vw, 72px) 0 0; background: var(--foot); color: var(--ink-2); }
+  footer .cols { padding: clamp(36px, 5vw, 52px) clamp(16px, 4vw, 48px); display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 48px; }
+  footer h2 { margin: 0 0 16px; font-size: 13px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--ink); }
+  footer ul { margin: 0; padding: 0 0 0 18px; display: flex; flex-direction: column; gap: 12px; font-size: 15px; }
+  footer p { margin: 0; font-size: 15px; }
+  footer .bar { background: var(--foot-2); }
+  footer .bar .wrap { min-height: 60px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  footer .bar span { font-size: 14px; font-weight: 600; color: var(--band-sub); }
+  footer .bar a { font-size: 14px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; text-decoration: none; }
+
+  #print { display: none; }
+  @media print {
+    body > *:not(#print) { display: none !important; }
+    #print { display: block; font-family: Georgia, serif; color: #000; font-size: 12pt; }
+    #print img { max-width: 100%; max-height: 50vh; display: block; margin: 8pt 0; }
+    #print .pr-meta { color: #444; font-size: 10pt; margin: 2pt 0; }
+    #print h2 { font-size: 16pt; margin: 12pt 0 4pt; } #print h3 { font-size: 14pt; margin: 8pt 0 2pt; }
+    #print p { margin: 2pt 0; }
+  }
+</style>
+</head>
+<body id="top">
+
+<div class="sky">
+  <header class="top wrap">
+    <a class="mark" href="#top">Decode<b>Clouds</b></a>
+  </header>
+  <section class="hero wrap">
+    <div class="hero-text">
+      <h1>Cloud<br /><b>Decoder</b></h1>
+      <p class="lede">Take a photo of the sky to identify the cloud.</p>
+    </div>
+    <form class="tool" onsubmit="return false">
+      <p class="eyebrow">Upload a sky photo</p>
+      <label class="drop" id="drop" for="pick">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 18a4.5 4.5 0 0 1-.9-8.9A6 6 0 0 1 17.6 8 4 4 0 0 1 17 18H7z"/><path d="M12 13v7M9 16l3-3 3 3"/></svg>
+        <span class="drop-title"><span class="is-desktop">Drag a photo here, or <u>browse</u></span><span class="is-touch">Tap to take or choose a photo</span></span>
+        <span class="drop-hint">JPG or PNG &middot; a wide shot of the sky works best</span>
+      </label>
+      <input id="pick" type="file" accept="image/*" />
+      <div class="preview" id="preview" hidden>
+        <img id="preview-img" alt="Your sky photo" />
+        <div class="file-row"><span class="fname" id="fname"></span><button class="ghost" id="reset" type="button">Remove</button></div>
+      </div>
+      <div class="act">
+        <button class="pill primary" id="go" type="button" disabled>Identify clouds</button>
+        <button class="pill ghost-pill" id="reset-btn" type="button" disabled><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>Reset</button>
+      </div>
+    </form>
+  </section>
+</div>
+
+<main class="wrap">
+  <section class="block" id="result-block" hidden>
+    <h2>Result</h2>
+    <div id="result"></div>
+  </section>
+
+  <section class="block" id="clouds">
+    <h2>Cloud types this tool can identify</h2>
+    <div class="tiers-wrap">
+      <div class="tiers">
+        <div class="band high"><div class="th"><b>High level</b><span>above 20,000 ft</span></div>
+          <ul class="chips"><li data-t="Cirrus">Cirrus</li><li data-t="Cirrocumulus">Cirrocumulus</li><li data-t="Cirrostratus">Cirrostratus</li></ul></div>
+        <div class="band mid"><div class="th"><b>Mid level</b><span>6,500 to 20,000 ft</span></div>
+          <ul class="chips"><li data-t="Altocumulus">Altocumulus</li><li data-t="Altostratus">Altostratus</li></ul></div>
+        <div class="band low"><div class="th"><b>Low level</b><span>below 6,500 ft</span></div>
+          <ul class="chips"><li data-t="Stratus">Stratus</li><li data-t="Stratocumulus">Stratocumulus</li><li data-t="Cumulus">Cumulus</li></ul></div>
+        <div class="band note-band"><p class="note"><b>Note:</b> Types identified in your photo appear in bold. The tool identifies eleven cloud types: the ten World Meteorological Organization standard cloud genera, plus towering cumulus, the stage between cumulus and cumulonimbus. It also calls out one special feature when it sees it, the fallstreak hole.</p></div>
+      </div>
+      <div class="side">
+        <div class="multi"><b>Spans multiple levels</b>
+          <ul class="chips"><li data-t="Nimbostratus">Nimbostratus</li><li data-t="Towering Cumulus">Towering Cumulus</li><li data-t="Cumulonimbus">Cumulonimbus</li></ul></div>
+        <div class="multi special"><b>Special feature</b>
+          <ul class="chips"><li data-f="fallstreak_hole">Fallstreak hole (hole punch cloud)</li></ul></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap cols">
+    <div><h2>References</h2>
+      <ul>
+        <li>World Meteorological Organization (WMO), <a href="https://cloudatlas.wmo.int/" target="_blank" rel="noopener">International Cloud Atlas</a>. Cloud identifications on this page are classified against its standard genera.</li>
+        <li>Federal Aviation Administration (FAA), <a href="https://www.faa.gov/sites/faa.gov/files/FAA-H-8083-28B.pdf" target="_blank" rel="noopener">FAA-H-8083-28, <em>Aviation Weather Handbook</em></a>. Cloud classification, the ten standard genera, and towering cumulus as a convective-hazard indicator.</li>
+        <li>Federal Aviation Administration (FAA), <a href="https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/faa-h-8083-25c.pdf" target="_blank" rel="noopener">Pilot&rsquo;s Handbook of Aeronautical Knowledge (PHAK)</a>, Aviation Weather chapter.</li>
+      </ul></div>
+    <div><h2>Disclaimer</h2>
+      <p>For educational purposes only. Photos uploaded for cloud identification are processed in real-time and are not stored. Cloud identification may be inaccurate or incomplete. Not for weather forecasting, aviation, or safety-critical decisions; consult official meteorological sources.</p></div>
+  </div>
+  <div class="bar"><div class="wrap"><span>&copy; 2026 DecodeClouds</span><a href="#top">Back to top &uarr;</a></div></div>
+</footer>
+
+<div id="print"></div>
+
+<script>
+"use strict";
+/* This site's own worker — deploy from ../worker (see README). */
+var WORKER_URL = "https://decode-clouds.zwubbena.workers.dev/classify";
+var $ = function (id) { return document.getElementById(id); };
+var pick = $("pick"), drop = $("drop"), go = $("go"), result = $("result"), block = $("result-block"), pv = $("preview"), pvi = $("preview-img");
+var b64 = null, mime = null, fname = "", lastTypes = null, lastConf = {}, lastFeature = null, lastReasoning = null, resultAt = null, photoAt = null;
+
+var INFO = {
+  "Cirrus":           { tier: "High level · above 20,000 ft", form: "cirrus = curl of hair; thin wisps and streaks", alt: "high tier, above 20,000 ft", text: "Thin white brushstrokes, often curled at one end. Fair weather today; sometimes the first hint of a change in a day or two." },
+  "Cirrocumulus":     { tier: "High level · above 20,000 ft", form: "cumulus = heap, here fine grains and ripples", alt: "cirro- = high tier, above 20,000 ft", text: "High-altitude clouds in small, white, rippled patches resembling fish scales. Often precede fair weather but can signal change." },
+  "Cirrostratus":     { tier: "High level · above 20,000 ft", form: "stratus = layer, here a thin veil", alt: "cirro- = high tier, above 20,000 ft", text: "A thin sheet that turns the whole sky pale and puts a halo around the sun or moon. Rain often follows within a day." },
+  "Altocumulus":      { tier: "Mid level · 6,500 to 20,000 ft", form: "cumulus = heap, in patches and rows", alt: "alto- = mid tier, 6,500 to 20,000 ft", text: "White or gray cotton patches, often lined up in waves. On a warm, humid morning they can hint at afternoon storms." },
+  "Altostratus":      { tier: "Mid level · 6,500 to 20,000 ft", form: "stratus = layer, a gray sheet", alt: "alto- = mid tier, 6,500 to 20,000 ft", text: "A gray sheet across the sky; the sun shows as a dim disk with no shadows. Steady rain may be a few hours out." },
+  "Nimbostratus":     { tier: "Spans multiple levels", form: "nimbus = rain + stratus = layer", alt: "base is low; the layer reaches into the mid tier", text: "Dark, featureless, and low enough to feel close. If it isn’t raining or snowing yet, it’s about to, and for a while." },
+  "Stratus":          { tier: "Low level · below 6,500 ft", form: "stratus = layer", alt: "low tier, below 6,500 ft", text: "A flat, uniform gray layer, like fog that lifted a few hundred feet. Drizzle at most." },
+  "Stratocumulus":    { tier: "Low level · below 6,500 ft", form: "stratus = layer + cumulus = heap; lumpy rolls", alt: "low tier, below 6,500 ft", text: "Low, rounded gray masses with some blue between. Looks threatening, rarely delivers more than a sprinkle." },
+  "Cumulus":          { tier: "Low level · below 6,500 ft", form: "cumulus = heap", alt: "low tier, below 6,500 ft", text: "Puffy, flat-bottomed, bright white on top. The fair-weather cloud of postcards." },
+  "Towering Cumulus": { tier: "Spans multiple levels", form: "cumulus = heap, building upward (congestus)", alt: "base low; top reaches the mid tier or higher", text: "A cumulus that has started building upward, taller than it is wide. Showers possible. If it keeps growing it becomes a cumulonimbus." },
+  "Cumulonimbus":     { tier: "Spans multiple levels", form: "cumulus = heap + nimbus = rain", alt: "base low; top can reach 40,000 ft or more", text: "A tower that flattens into an anvil at the top. Lightning, heavy rain, gusts, sometimes hail. Head indoors." }
+};
+var FEATURE = { fallstreak_hole: "Fallstreak hole (hole punch cloud)" };
+
+function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+function p2(n) { return (n < 10 ? "0" : "") + n; }
+function confHtml(c) { var L = { high: "high confidence", medium: "medium confidence", low: "low confidence" }[c]; return L ? '<span class="conf ' + c + '"><span class="dots"><i></i><i></i><i></i></span>' + L + "</span>" : ""; }
+function featureName(fe) { return FEATURE[fe.type] || String(fe.type).replace(/_/g, " "); }
+function highlight(types) {
+  document.querySelectorAll(".chips li[data-t]").forEach(function (el) { el.classList.toggle("hit", types.indexOf(el.getAttribute("data-t")) !== -1); });
+  document.querySelectorAll(".chips li[data-f]").forEach(function (el) { el.classList.toggle("hit", !!(types.length && lastFeature && lastFeature.type === el.getAttribute("data-f"))); });
+}
+
+function cardsHtml() {
+  var h = "";
+  if (!lastTypes.length) h += '<article class="card"><h3>Clear sky</h3><p>No cloud types identified.</p></article>';
+  lastTypes.forEach(function (t) {
+    var i = INFO[t] || { tier: "Cloud", text: "", form: "", alt: "" };
+    h += '<article class="card"><div class="row"><p class="eyebrow">' + esc(i.tier) + "</p>" + confHtml(lastConf[t]) + "</div><h3>" + esc(t) + "</h3>" +
+      (i.text ? "<p>" + esc(i.text) + "</p>" : "") +
+      (i.form ? '<div class="details"><p class="eyebrow">Details for your brain:</p><dl><dt>Form</dt><dd>' + esc(i.form) + "</dd><dt>Altitude</dt><dd>" + esc(i.alt) + "</dd></dl></div>" : "") + "</article>";
+  });
+  if (lastFeature && lastFeature.type) {
+    var n = featureName(lastFeature), m = n.match(/^(.*?)\s*\((.*)\)$/);
+    h += '<article class="card feature"><div class="row"><p class="eyebrow">Special feature</p>' + confHtml(lastFeature.confidence) + "</div><h3>" +
+      (m ? esc(m[1]) + "<small>(" + esc(m[2]) + ")</small>" : esc(n)) + "</h3>" + (lastFeature.note ? "<p>" + esc(lastFeature.note) + "</p>" : "") + "</article>";
+  }
+  return '<div class="cards">' + h + "</div>";
+}
+function reasoningRows() {
+  var r = lastReasoning; if (!r) return [];
+  return [["How high it looked", r.perceivedAltitude], ["Texture", Array.isArray(r.texture) ? r.texture.join(", ") : r.texture], ["Light and shading", r.opacityShading], ["Notes", r.notes]].filter(function (x) { return x[1]; });
+}
+function reasoningHtml() {
+  var rows = reasoningRows(); if (!rows.length) return "";
+  return '<details class="how"><summary>How this was identified</summary><ul>' + rows.map(function (x) { return "<li><b>" + x[0] + ":</b> " + esc(x[1]) + "</li>"; }).join("") + "</ul></details>";
+}
+function render() {
+  result.innerHTML = cardsHtml() + reasoningHtml() +
+    '<div class="actions"><button class="pill white" id="pdf-btn" type="button">Download</button><button class="pill white" id="email-btn" type="button">Email</button><button class="pill white" id="text-btn" type="button">Text</button>' +
+    '</div>' +
+    '<p class="share-hint">Email and Text open your phone’s share sheet with the photo attached. Download saves a PDF.</p>';
+  $("pdf-btn").addEventListener("click", downloadPdf);
+  $("email-btn").addEventListener("click", function () { shareReport("email"); });
+  $("text-btn").addEventListener("click", function () { shareReport("text"); });
+  highlight(lastTypes);
+}
+
+/* photo in */
+function shrink(dataUrl, maxEdge, cb) {
+  var done = false; function fin(u, t) { if (!done) { done = true; cb(u, t); } }
+  setTimeout(function () { fin(dataUrl, mime); }, 4000);
+  var img = new Image();
+  img.onload = function () {
+    try {
+      var w = img.naturalWidth, h = img.naturalHeight, L = Math.max(w, h);
+      if (!w || L <= maxEdge) return fin(dataUrl, mime);
+      var s = maxEdge / L, c = document.createElement("canvas");
+      c.width = Math.round(w * s); c.height = Math.round(h * s);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      fin(c.toDataURL("image/jpeg", 0.85), "image/jpeg");
+    } catch (e) { fin(dataUrl, mime); }
+  };
+  img.onerror = function () { fin(dataUrl, mime); };
+  img.src = dataUrl;
+}
+function exifDate(dataUrl) {
+  try {
+    if (dataUrl.indexOf("data:image/jpeg") !== 0) return null;
+    var bin = atob((dataUrl.split(",")[1] || "").slice(0, 174764));
+    var m = bin.match(/(19|20)\d{2}:\d{2}:\d{2} \d{2}:\d{2}:\d{2}/g); if (!m) return null;
+    m.sort(); var t = m[0];
+    var d = new Date(t.slice(0, 4) + "-" + t.slice(5, 7) + "-" + t.slice(8, 10) + "T" + t.slice(11));
+    return (isNaN(d.getTime()) || d.getFullYear() < 2000 || d > new Date()) ? null : d;
+  } catch (e) { return null; }
+}
+function loadFile(f) {
+  if (!f || !/^image\//.test(f.type || "image/jpeg")) return;
+  fname = f.name; mime = f.type || "image/jpeg";
+  $("fname").textContent = (f.name === "image.jpg" ? "Photo ready" : f.name) + " · " + Math.round(f.size / 1024) + " KB";
+  block.hidden = true; result.innerHTML = ""; lastTypes = null; highlight([]);
+  var r = new FileReader();
+  r.onload = function () {
+    pvi.src = r.result; pv.hidden = false; drop.hidden = true; $("reset-btn").disabled = false;
+    photoAt = exifDate(r.result) || (f.lastModified ? new Date(f.lastModified) : null);
+    shrink(r.result, 1200, function (u, t) { mime = t; b64 = u.split(",")[1]; go.disabled = !b64; });
+  };
+  r.readAsDataURL(f);
+}
+pick.addEventListener("change", function (e) { loadFile(e.target.files && e.target.files[0]); });
+["dragenter", "dragover"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add("over"); }); });
+["dragleave", "drop"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove("over"); }); });
+drop.addEventListener("drop", function (e) { loadFile(e.dataTransfer.files && e.dataTransfer.files[0]); });
+function resetAll() {
+  pick.value = ""; b64 = null; pv.hidden = true; pvi.src = ""; drop.hidden = false; go.disabled = true; $("reset-btn").disabled = true;
+  block.hidden = true; result.innerHTML = ""; lastTypes = null; $("fname").textContent = ""; highlight([]);
+}
+$("reset").addEventListener("click", resetAll);
+$("reset-btn").addEventListener("click", resetAll);
+
+go.addEventListener("click", function () {
+  if (!b64) return;
+  go.disabled = true; go.textContent = "Identifying…"; block.hidden = false;
+  result.innerHTML = '<p class="loading">Reading the sky&hellip; usually 5 to 15 seconds.</p>';
+  fetch(WORKER_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ image: b64, mediaType: mime }) })
+    .then(function (r) { return r.json(); })
+    .then(function (res) {
+      go.disabled = false; go.textContent = "Identify clouds";
+      if (!res || !res.ok) { result.innerHTML = '<p class="err">' + esc((res && res.data && res.data.message) || "Couldn’t read that one. Try another photo.") + "</p>"; return; }
+      var d = res.data || {};
+      lastTypes = d.types || []; lastConf = d.confidence || {}; lastReasoning = d.reasoning || null; lastFeature = d.feature || null; resultAt = new Date();
+      render();
+    })
+    .catch(function () { go.disabled = false; go.textContent = "Identify clouds"; result.innerHTML = '<p class="err">Couldn’t connect. Check your signal and try again.</p>'; });
+});
+
+/* stamps, filenames, share, print */
+function stampParts(d) {
+  return { iso: d.getFullYear() + "-" + p2(d.getMonth() + 1) + "-" + p2(d.getDate()) + "_T" + p2(d.getHours()) + p2(d.getMinutes()),
+    local: d.toLocaleString("en-US", { weekday: "short", year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" }),
+    zulu: p2(d.getUTCHours()) + p2(d.getUTCMinutes()) + "Z " + d.getUTCFullYear() + "-" + p2(d.getUTCMonth() + 1) + "-" + p2(d.getUTCDate()) };
+}
+function typeSlug() { return lastTypes && lastTypes.length ? lastTypes.slice().sort().map(function (t) { return t.toLowerCase().replace(/[^a-z0-9]+/g, "-"); }).join("-") : "clear"; }
+function stampLines() {
+  var t = stampParts(resultAt || new Date());
+  if (photoAt && stampParts(photoAt).iso !== t.iso) { var pt = stampParts(photoAt); return { text: "Photo taken: " + pt.local + " · " + pt.zulu + "\nIdentified: " + t.local + " · " + t.zulu, iso: t.iso }; }
+  return { text: "Snapped and identified: " + t.local + " · " + t.zulu, iso: t.iso };
+}
+function subjectLine() { var st = stampLines(); return "DecodeClouds — " + st.iso.replace("_T", " ").replace(/(\d\d)(\d\d)$/, "$1:$2") + " · " + typeSlug(); }
+function namesText(short) { return lastTypes.length ? lastTypes.map(function (t) { var c = lastConf[t]; return t + (c ? " (" + c + (short ? "" : " confidence") + ")" : ""); }).join(", ") : "Clear sky, no cloud types identified"; }
+function featureText() { return lastFeature && lastFeature.type ? "\nSpecial feature: " + featureName(lastFeature) + (lastFeature.confidence ? " (" + lastFeature.confidence + ")" : "") + (lastFeature.note ? "\n" + lastFeature.note : "") : ""; }
+function summaryText() {
+  var rows = reasoningRows();
+  return subjectLine() + "\n\n" + stampLines().text + "\nResult: " + namesText(false) + featureText() +
+    (rows.length ? "\n\nHow this was identified:\n" + rows.map(function (x) { return "- " + x[0] + ": " + x[1]; }).join("\n") : "") + "\n\ndecodeclouds.com · Educational only.";
+}
+function textMessageBody() { return subjectLine() + "\n" + namesText(true) + (lastFeature && lastFeature.type ? "\nSpecial feature: " + featureName(lastFeature) : "") + "\n" + stampLines().text.split("\n")[0] + "\ndecodeclouds.com"; }
+function shareReport(mode) {
+  if (lastTypes === null) return;
+  var st = stampLines(), subject = subjectLine(), body = mode === "text" ? textMessageBody() : summaryText(), shared = false;
+  try {
+    if (navigator.canShare && pvi.src.indexOf("data:") === 0) {
+      var parts = pvi.src.split(","), m = (parts[0].match(/data:([^;]+)/) || [null, "image/jpeg"])[1], bin = atob(parts[1]), arr = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      var photo = new File([arr], "decodeclouds_" + typeSlug() + "_" + st.iso + (m === "image/png" ? ".png" : ".jpg"), { type: m });
+      if (navigator.canShare({ files: [photo] })) { shared = true; navigator.share({ files: [photo], title: subject, text: body }).catch(function () {}); }
+    }
+  } catch (e) { shared = false; }
+  if (!shared) location.href = mode === "text" ? "sms:?&body=" + encodeURIComponent(body) : "mailto:?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+}
+function downloadPdf() {
+  if (lastTypes === null) return;
+  var st = stampLines(), prev = document.title;
+  document.title = "decodeclouds_" + typeSlug() + "_" + st.iso;
+  function restore() { document.title = prev; window.removeEventListener("afterprint", restore); }
+  window.addEventListener("afterprint", restore); setTimeout(restore, 3000);
+  $("print").innerHTML = "<p><b>DecodeClouds</b> · decodeclouds.com</p>" +
+    '<p class="pr-meta">' + esc(st.text).replace("\n", "<br>") + "</p>" +
+    (pvi.src ? '<img src="' + pvi.src + '" alt="Sky photo" />' : "") +
+    "<h2>Result</h2>" + (lastTypes.length ? lastTypes.map(function (t) { var i = INFO[t] || {}; return "<h3>" + esc(t) + (lastConf[t] ? " <small>(" + lastConf[t] + " confidence)</small>" : "") + "</h3><p>" + esc(i.text || "") + "</p>"; }).join("") : "<p>Clear sky, no cloud types identified.</p>") +
+    (lastFeature && lastFeature.type ? "<h3>Special feature: " + esc(featureName(lastFeature)) + "</h3><p>" + esc(lastFeature.note || "") + "</p>" : "") +
+    (reasoningRows().length ? "<h2>How this was identified</h2>" + reasoningRows().map(function (x) { return "<p><b>" + x[0] + ":</b> " + esc(x[1]) + "</p>"; }).join("") : "") +
+    '<p class="pr-meta">For educational purposes only. Cloud identification may be inaccurate or incomplete. Not for weather forecasting, aviation, or safety-critical decisions.</p>';
+  window.print();
+}
+
+</script>
+</body>
+</html>

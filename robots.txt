@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://decodeclouds.com/sitemap.xml
