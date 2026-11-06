@@ -158,19 +158,28 @@ go.addEventListener("click", function () {
   go.disabled = true; go.textContent = "Identifying…"; block.hidden = false;
   block.scrollIntoView({ behavior: "smooth", block: "start" });
   result.innerHTML = '<p class="loading">Reading the sky&hellip; usually 5 to 15 seconds.</p>';
+  /* The worker gives up on the AI after 30 s and says so; this is a backstop if the network itself stalls. */
+  var ctrl = typeof AbortController === "function" ? new AbortController() : null, clientTimer = null;
   getTurnstileToken()
     .then(function (token) {
-      return fetch(WORKER_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ image: b64, mediaType: mime, turnstile: token }) });
+      if (ctrl) clientTimer = setTimeout(function () { ctrl.abort(); }, 40000);
+      return fetch(WORKER_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ image: b64, mediaType: mime, turnstile: token }), signal: ctrl ? ctrl.signal : undefined });
     })
     .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, data: j }; }, function () { return { ok: r.ok, data: {} }; }); })
     .then(function (res) {
+      clearTimeout(clientTimer);
       go.disabled = false; go.textContent = "Identify clouds";
       if (!res || !res.ok) { result.innerHTML = '<p class="err">' + esc((res && res.data && res.data.message) || "Couldn’t read that one. Try another photo.") + "</p>"; return; }
       var d = res.data || {};
       lastTypes = d.types || []; lastConf = d.confidence || {}; lastReasoning = d.reasoning || null; lastFeature = d.feature || null; resultAt = new Date();
       render();
     })
-    .catch(function () { go.disabled = false; go.textContent = "Identify clouds"; result.innerHTML = '<p class="err">Couldn’t connect. Check your signal and try again.</p>'; });
+    .catch(function (err) {
+      clearTimeout(clientTimer);
+      go.disabled = false; go.textContent = "Identify clouds";
+      var timedOut = err && err.name === "AbortError";
+      result.innerHTML = '<p class="err">' + (timedOut ? "Identifying took too long this time. Please try again." : "Couldn’t connect. Check your signal and try again.") + "</p>";
+    });
 });
 
 /* stamps, filenames, share, print */
