@@ -152,6 +152,9 @@ footer .bar a { font-size: 13px; font-weight: 800; letter-spacing: .12em; text-t
 .photo-dialog { width: min(760px, calc(100vw - 24px)); max-height: calc(100vh - 24px); padding: 0; border: 0; border-radius: 20px; overflow: auto; background: var(--card); color: var(--ink); box-shadow: 0 30px 80px -20px rgba(15,26,40,.55); }
 .photo-dialog::backdrop { background: rgba(15,26,40,.62); }
 .photo-dialog img { display: block; width: 100%; height: auto; max-height: 62vh; object-fit: cover; background: var(--page); }
+.pd-missing { display: grid; place-content: center; gap: 4px; max-height: 62vh; padding: 24px; text-align: center; background: var(--page); color: var(--muted); font-size: 14px; }
+.pd-missing p { margin: 0; }
+.pd-missing a { color: var(--head); font-weight: 700; }
 .pd-body { padding: 14px 20px 18px; display: grid; gap: 6px; }
 .pd-body h3 { margin: 0; font-size: 20px; font-weight: 800; line-height: 1.25; }
 .pd-body p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted); }

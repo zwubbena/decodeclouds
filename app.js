@@ -354,7 +354,12 @@ var PHOTO_EXTRA = {
 (function () {
   var dlg = $("photo-dialog");
   if (!dlg || typeof dlg.showModal !== "function") return;
-  var img = $("pd-img");
+  var img = $("pd-img"), miss = $("pd-missing");
+  /* If the photo server refuses or drops the request, show a short note instead of a broken image. */
+  img.addEventListener("error", function () {
+    if (img.complete && !img.naturalWidth && img.getAttribute("src")) { img.hidden = true; miss.hidden = false; }
+  });
+  img.addEventListener("load", function () { img.hidden = false; miss.hidden = true; });
   function link(href, text) { var a = document.createElement("a"); a.href = href; a.target = "_blank"; a.rel = "noopener noreferrer"; a.textContent = text; return a; }
   function openPhoto(key) {
     var p = PHOTOS[key]; if (!p) return;
@@ -362,6 +367,7 @@ var PHOTO_EXTRA = {
     $("pd-tier").textContent = info ? info.tier : extra.tier;
     $("pd-title").textContent = info ? key : extra.name;
     $("pd-text").textContent = info ? info.text : extra.text;
+    img.hidden = false; miss.hidden = true; miss.style.aspectRatio = p.w + " / " + p.h; $("pd-missing-link").href = p.page;
     img.removeAttribute("src"); img.style.aspectRatio = p.w + " / " + p.h; img.style.objectPosition = p.pos || "50% 50%"; img.alt = p.alt; img.src = p.src;
     var c = $("pd-credit"); c.textContent = "Photo: " + p.author + " · ";
     c.appendChild(link(p.licUrl, p.license)); c.appendChild(document.createTextNode(" · via ")); c.appendChild(link(p.page, "Wikimedia Commons"));

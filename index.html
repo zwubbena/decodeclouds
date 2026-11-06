@@ -17,7 +17,7 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 <link rel="preload" href="/fonts/nunito-latin-wght.woff2" as="font" type="font/woff2" crossorigin />
 <link rel="preload" href="/fonts/source-serif-4-latin-opsz.woff2" as="font" type="font/woff2" crossorigin />
-<link rel="stylesheet" href="/site.css?v=db99b16d" />
+<link rel="stylesheet" href="/site.css?v=7e85c41f" />
 </head>
 <body id="top">
 
@@ -101,6 +101,7 @@
 <dialog id="photo-dialog" class="photo-dialog" aria-labelledby="pd-title">
   <button class="pd-close" id="pd-close" type="button" aria-label="Close photo">&times;</button>
   <img id="pd-img" alt="" referrerpolicy="no-referrer" decoding="async" />
+  <div class="pd-missing" id="pd-missing" hidden><p>This photo didn&rsquo;t load.</p><a id="pd-missing-link" href="#" target="_blank" rel="noopener">See it on Wikimedia Commons</a></div>
   <div class="pd-body">
     <p class="eyebrow" id="pd-tier"></p>
     <h3 id="pd-title"></h3>
@@ -111,6 +112,6 @@
 
 <div id="print"></div>
 
-<script src="/app.js?v=8cbeeb70"></script>
+<script src="/app.js?v=c57c42a0"></script>
 </body>
 </html>
