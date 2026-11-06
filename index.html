@@ -237,7 +237,7 @@
 /* This site's own worker — deploy from ../worker (see README). */
 var WORKER_URL = "https://decode-clouds.zwubbena.workers.dev/classify";
 /* Cloudflare Turnstile bot check. The site key is public. Empty = check off. */
-var TURNSTILE_SITEKEY = "";
+var TURNSTILE_SITEKEY = "0x4AAAAAAF1xtuj8d40wVGTB";
 var tsWidget = null, tsWaiter = null, tsReady = Promise.resolve();
 if (TURNSTILE_SITEKEY) {
   tsReady = new Promise(function (res) {
