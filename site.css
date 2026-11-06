@@ -142,3 +142,21 @@ footer .bar a { font-size: 13px; font-weight: 800; letter-spacing: .12em; text-t
   #print h2 { font-size: 16pt; margin: 12pt 0 4pt; } #print h3 { font-size: 14pt; margin: 8pt 0 2pt; }
   #print p { margin: 2pt 0; }
 }
+
+/* Example-photo pop-up for each cloud chip */
+.section-hint { margin: -8px 0 0; font-size: 14px; color: var(--muted); }
+.chips li[role="button"] { cursor: pointer; transition: transform .12s ease, box-shadow .12s ease; }
+.chips li[role="button"]:hover { transform: translateY(-1px); box-shadow: 0 6px 14px -8px rgba(23,38,58,.5); }
+.chips li[role="button"]:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.multi .chips li[role="button"]:focus-visible { outline-color: #fff; }
+.photo-dialog { width: min(760px, calc(100vw - 24px)); max-height: calc(100vh - 24px); padding: 0; border: 0; border-radius: 20px; overflow: auto; background: var(--card); color: var(--ink); box-shadow: 0 30px 80px -20px rgba(15,26,40,.55); }
+.photo-dialog::backdrop { background: rgba(15,26,40,.62); }
+.photo-dialog img { display: block; width: 100%; height: auto; max-height: 62vh; object-fit: cover; background: var(--page); }
+.pd-body { padding: 14px 20px 18px; display: grid; gap: 6px; }
+.pd-body h3 { margin: 0; font-size: 20px; font-weight: 800; line-height: 1.25; }
+.pd-body p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted); }
+.pd-body .pd-credit { margin-top: 4px; font-size: 12px; }
+.pd-credit a { color: var(--head); }
+.pd-close { position: absolute; top: 10px; right: 10px; z-index: 1; width: 38px; height: 38px; display: grid; place-items: center; border: 0; border-radius: 999px; background: rgba(15,26,40,.6); color: #fff; font-size: 24px; line-height: 1; cursor: pointer; }
+.pd-close:hover { background: rgba(15,26,40,.82); }
+.pd-close:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }

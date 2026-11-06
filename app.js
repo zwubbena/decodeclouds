@@ -210,6 +210,172 @@ go.addEventListener("click", function () {
     });
 });
 
+/* Real-photo examples for the reference list. Freely licensed photos from Wikimedia Commons,
+   credited in the pop-up; loaded only when a visitor opens one, with no referrer sent. */
+var PHOTOS = {
+  "Cirrus": {
+    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Cirrus_front_over_Austnesfjorden%2C_Austv%C3%A5g%C3%B8ya%2C_Lofoten%2C_Norway%2C_2015_April.jpg/1280px-Cirrus_front_over_Austnesfjorden%2C_Austv%C3%A5g%C3%B8ya%2C_Lofoten%2C_Norway%2C_2015_April.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Cirrus_front_over_Austnesfjorden%2C_Austv%C3%A5g%C3%B8ya%2C_Lofoten%2C_Norway%2C_2015_April.jpg",
+    "author": "Ximonic (Simo Räsänen)",
+    "license": "CC BY-SA 3.0",
+    "licUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "alt": "Long, feathery streaks of cirrus fanning across a blue sky over a fjord in Lofoten, Norway",
+    "w": 1280,
+    "h": 693
+  },
+  "Cirrocumulus": {
+    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Cirrocumulus_clouds_Thousand_Oaks_July_2010.jpg/1280px-Cirrocumulus_clouds_Thousand_Oaks_July_2010.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Cirrocumulus_clouds_Thousand_Oaks_July_2010.jpg",
+    "author": "King of Hearts",
+    "license": "CC BY-SA 3.0",
+    "licUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "alt": "Rows of tiny white cloudlets, like fish scales, across a blue sky",
+    "w": 1280,
+    "h": 819
+  },
+  "Cirrostratus": {
+    "src": "https://upload.wikimedia.org/wikipedia/commons/9/9d/Cirrostratus_fibratus_with_22_degrees_halo.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Cirrostratus_fibratus_with_22_degrees_halo.jpg",
+    "author": "Eduardo Marquetti",
+    "license": "CC BY-SA 2.0",
+    "licUrl": "https://creativecommons.org/licenses/by-sa/2.0/",
+    "alt": "A thin cirrostratus veil with a bright ring, a halo, around the sun, which is hidden behind a rock",
+    "w": 1024,
+    "h": 768
+  },
+  "Altocumulus": {
+    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/Altocumulus.jpg/1280px-Altocumulus.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Altocumulus.jpg",
+    "author": "Bidgee",
+    "license": "CC BY-SA 3.0",
+    "licUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "alt": "Many small white and gray puffy patches spread across a blue sky",
+    "w": 1280,
+    "h": 851
+  },
+  "Altostratus": {
+    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/2020-12-31_16_06_58_Altostratus_with_a_wavy_undulating_base_above_the_Dulles_section_of_Sterling%2C_Loudoun_County%2C_Virginia.jpg/1280px-2020-12-31_16_06_58_Altostratus_with_a_wavy_undulating_base_above_the_Dulles_section_of_Sterling%2C_Loudoun_County%2C_Virginia.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:2020-12-31_16_06_58_Altostratus_with_a_wavy_undulating_base_above_the_Dulles_section_of_Sterling%2C_Loudoun_County%2C_Virginia.jpg",
+    "author": "Famartin",
+    "license": "CC BY-SA 4.0",
+    "licUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "alt": "A gray sheet of altostratus with a wavy, rippled underside",
+    "w": 1280,
+    "h": 960
+  },
+  "Nimbostratus": {
+    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/20151123Hockenheim1.jpg/1280px-20151123Hockenheim1.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:20151123Hockenheim1.jpg",
+    "author": "AnRo0002",
+    "license": "CC0",
+    "licUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "alt": "A dark, low, gray rain-cloud layer covering the sky",
+    "w": 1280,
+    "h": 960
+  },
+  "Stratus": {
+    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Stratus_clouds_Vodno_4.jpg/1280px-Stratus_clouds_Vodno_4.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Stratus_clouds_Vodno_4.jpg",
+    "author": "kallerna",
+    "license": "CC BY-SA 4.0",
+    "licUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "alt": "A flat layer of low stratus cloud filling the valley below a hilltop",
+    "w": 1280,
+    "h": 853
+  },
+  "Stratocumulus": {
+    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Stratocumulus_clouds_21072012.jpg/1280px-Stratocumulus_clouds_21072012.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Stratocumulus_clouds_21072012.jpg",
+    "author": "Joydeep",
+    "license": "CC BY-SA 3.0",
+    "licUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "alt": "Large rounded lumps of stratocumulus with blue sky showing between them",
+    "w": 1280,
+    "h": 850
+  },
+  "Cumulus": {
+    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Cumulus_humilis_clouds.jpg/1280px-Cumulus_humilis_clouds.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Cumulus_humilis_clouds.jpg",
+    "author": "Toby Hudson",
+    "license": "CC BY-SA 3.0",
+    "licUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "alt": "Puffy white cumulus clouds with flat bases over open country",
+    "w": 1280,
+    "h": 909
+  },
+  "Towering Cumulus": {
+    "src": "https://upload.wikimedia.org/wikipedia/commons/f/f4/Cumulus_congestus_cloud.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Cumulus_congestus_cloud.jpg",
+    "author": "Bidgee",
+    "license": "CC BY-SA 3.0",
+    "licUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "alt": "A cumulus cloud building tall, its top bulging upward like a cauliflower",
+    "w": 1000,
+    "h": 930
+  },
+  "Cumulonimbus": {
+    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Cumulonimbus_incus_over_Warsaw%2C_Poland.jpg/1280px-Cumulonimbus_incus_over_Warsaw%2C_Poland.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Cumulonimbus_incus_over_Warsaw%2C_Poland.jpg",
+    "author": "Kamil Nowacki",
+    "license": "CC BY-SA 4.0",
+    "licUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "alt": "A huge thunderstorm cloud with a flat, spreading anvil top over a city",
+    "w": 1280,
+    "h": 854
+  },
+  "fallstreak_hole": {
+    "src": "https://upload.wikimedia.org/wikipedia/commons/d/dc/HolePunchCloud.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:HolePunchCloud.jpg",
+    "author": "H. Raab (User:Vesta)",
+    "license": "CC BY-SA 3.0",
+    "licUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "alt": "A round hole in a thin cloud layer with a wispy trail of falling ice in its center",
+    "w": 1024,
+    "h": 682
+  },
+  "clear": {
+    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Cloudless_blue_sky_in_November_-_geograph.org.uk_-_8289272.jpg/1280px-Cloudless_blue_sky_in_November_-_geograph.org.uk_-_8289272.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Cloudless_blue_sky_in_November_-_geograph.org.uk_-_8289272.jpg",
+    "author": "Jaggery",
+    "license": "CC BY-SA 2.0",
+    "licUrl": "https://creativecommons.org/licenses/by-sa/2.0/",
+    "alt": "A cloudless blue sky above trees",
+    "w": 1280,
+    "h": 1370
+  }
+};
+var PHOTO_EXTRA = {
+  fallstreak_hole: { tier: "Special feature", name: "Fallstreak hole (hole punch cloud)", text: "A round gap punched in a thin layer of cloud, often with wispy streaks of falling ice hanging in the middle. It forms when supercooled droplets suddenly freeze, frequently set off by a passing airplane." },
+  clear: { tier: "No clouds", name: "Clear sky", text: "No clouds in view. The sky looks deepest blue overhead and paler toward the horizon." }
+};
+(function () {
+  var dlg = $("photo-dialog");
+  if (!dlg || typeof dlg.showModal !== "function") return;
+  var img = $("pd-img");
+  function link(href, text) { var a = document.createElement("a"); a.href = href; a.target = "_blank"; a.rel = "noopener noreferrer"; a.textContent = text; return a; }
+  function openPhoto(key) {
+    var p = PHOTOS[key]; if (!p) return;
+    var info = INFO[key], extra = PHOTO_EXTRA[key];
+    $("pd-tier").textContent = info ? info.tier : extra.tier;
+    $("pd-title").textContent = info ? key : extra.name;
+    $("pd-text").textContent = info ? info.text : extra.text;
+    img.removeAttribute("src"); img.style.aspectRatio = p.w + " / " + p.h; img.alt = p.alt; img.src = p.src;
+    var c = $("pd-credit"); c.textContent = "Photo: " + p.author + " · ";
+    c.appendChild(link(p.licUrl, p.license)); c.appendChild(document.createTextNode(" · via ")); c.appendChild(link(p.page, "Wikimedia Commons"));
+    dlg.showModal();
+  }
+  document.querySelectorAll(".chips li").forEach(function (li) {
+    var key = li.getAttribute("data-t") || li.getAttribute("data-f") || li.getAttribute("data-c");
+    if (!PHOTOS[key]) return;
+    li.setAttribute("role", "button"); li.setAttribute("tabindex", "0"); li.setAttribute("aria-haspopup", "dialog");
+    li.setAttribute("title", "See a photo");
+    li.addEventListener("click", function () { openPhoto(key); });
+    li.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openPhoto(key); } });
+  });
+  $("pd-close").addEventListener("click", function () { dlg.close(); });
+  dlg.addEventListener("click", function (e) { if (e.target === dlg) dlg.close(); });
+})();
+
 /* stamps, filenames, share, print */
 function stampParts(d) {
   return { iso: d.getFullYear() + "-" + p2(d.getMonth() + 1) + "-" + p2(d.getDate()) + "_T" + p2(d.getHours()) + p2(d.getMinutes()),
