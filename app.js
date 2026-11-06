@@ -59,7 +59,11 @@ var FEATURE = { fallstreak_hole: "Fallstreak hole (hole punch cloud)" };
 
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
 function p2(n) { return (n < 10 ? "0" : "") + n; }
-function confHtml(c) { var L = { high: "high confidence", medium: "medium confidence", low: "low confidence" }[c]; return L ? '<span class="conf ' + c + '"><span class="dots"><i></i><i></i><i></i></span>' + L + "</span>" : ""; }
+var CONF_LABEL = { high: "high confidence", medium: "medium confidence", low: "low confidence" };
+function confHtml(c) {
+  if (!Object.prototype.hasOwnProperty.call(CONF_LABEL, c)) return "";
+  return '<span class="conf ' + c + '"><span class="dots"><i></i><i></i><i></i></span>' + CONF_LABEL[c] + "</span>";
+}
 function featureName(fe) { return FEATURE[fe.type] || String(fe.type).replace(/_/g, " "); }
 function highlight(types, isResult) {
   document.querySelectorAll(".chips li[data-t]").forEach(function (el) { el.classList.toggle("hit", types.indexOf(el.getAttribute("data-t")) !== -1); });
@@ -246,11 +250,13 @@ function downloadPdf() {
   window.addEventListener("afterprint", restore); setTimeout(restore, 3000);
   $("print").innerHTML = "<p><b>DecodeClouds</b> · decodeclouds.com</p>" +
     '<p class="pr-meta">' + esc(st.text).replace("\n", "<br>") + "</p>" +
-    (pvi.src ? '<img src="' + pvi.src + '" alt="Sky photo" />' : "") +
-    "<h2>Result</h2>" + (lastTypes.length ? lastTypes.map(function (t) { var i = INFO[t] || {}; return "<h3>" + esc(t) + (lastConf[t] ? " <small>(" + lastConf[t] + " confidence)</small>" : "") + "</h3><p>" + esc(i.text || "") + "</p>"; }).join("") : "<p>Clear sky, no cloud types identified.</p>") +
+    '<span id="pr-photo"></span>' +
+    "<h2>Result</h2>" + (lastTypes.length ? lastTypes.map(function (t) { var i = INFO[t] || {}; return "<h3>" + esc(t) + (lastConf[t] ? " <small>(" + esc(lastConf[t]) + " confidence)</small>" : "") + "</h3><p>" + esc(i.text || "") + "</p>"; }).join("") : "<p>Clear sky, no cloud types identified.</p>") +
     (lastFeature && lastFeature.type ? "<h3>Special feature: " + esc(featureName(lastFeature)) + "</h3><p>" + esc(lastFeature.note || "") + "</p>" : "") +
     (reasoningRows().length ? "<h2>How this was identified</h2>" + reasoningRows().map(function (x) { return "<p><b>" + x[0] + ":</b> " + esc(x[1]) + "</p>"; }).join("") : "") +
     '<p class="pr-meta">For educational purposes only. Cloud identification may be inaccurate or incomplete. Not for weather forecasting, aviation, or safety-critical decisions.</p>';
+  var slot = $("pr-photo");
+  if (pvi.src) { var im = document.createElement("img"); im.src = pvi.src; im.alt = "Sky photo"; slot.replaceWith(im); } else { slot.remove(); }
   window.print();
 }
 
