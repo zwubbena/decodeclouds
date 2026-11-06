@@ -211,10 +211,10 @@ go.addEventListener("click", function () {
 });
 
 /* Real-photo examples for the reference list. Freely licensed photos from Wikimedia Commons,
-   credited in the pop-up; loaded only when a visitor opens one, with no referrer sent. */
+   resized copies served from this site's /photos/ folder; each is credited in the pop-up. */
 var PHOTOS = {
   "Cirrus": {
-    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Cirrus_clouds_with_3D_look.jpg/1280px-Cirrus_clouds_with_3D_look.jpg",
+    "src": "/photos/cirrus.jpg",
     "page": "https://commons.wikimedia.org/wiki/File:Cirrus_clouds_with_3D_look.jpg",
     "author": "Simon A. Eugster",
     "license": "CC BY-SA 3.0",
@@ -224,7 +224,7 @@ var PHOTOS = {
     "h": 851
   },
   "Cirrocumulus": {
-    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Cirrocumulus_clouds_Thousand_Oaks_July_2010.jpg/1280px-Cirrocumulus_clouds_Thousand_Oaks_July_2010.jpg",
+    "src": "/photos/cirrocumulus.jpg",
     "page": "https://commons.wikimedia.org/wiki/File:Cirrocumulus_clouds_Thousand_Oaks_July_2010.jpg",
     "author": "King of Hearts",
     "license": "CC BY-SA 3.0",
@@ -234,7 +234,7 @@ var PHOTOS = {
     "h": 819
   },
   "Cirrostratus": {
-    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Cs_nebulosus_with_faint_halo.jpg/1280px-Cs_nebulosus_with_faint_halo.jpg",
+    "src": "/photos/cirrostratus.jpg",
     "page": "https://commons.wikimedia.org/wiki/File:Cs_nebulosus_with_faint_halo.jpg",
     "author": "Rollcloud",
     "license": "Public domain",
@@ -244,7 +244,7 @@ var PHOTOS = {
     "h": 960
   },
   "Altocumulus": {
-    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/V%C3%A1%C5%A1a_pond_near_Milevsko_%286%29.JPG/1280px-V%C3%A1%C5%A1a_pond_near_Milevsko_%286%29.JPG",
+    "src": "/photos/altocumulus.jpg",
     "page": "https://commons.wikimedia.org/wiki/File:V%C3%A1%C5%A1a_pond_near_Milevsko_%286%29.JPG",
     "author": "Chmee2",
     "license": "CC BY 3.0",
@@ -255,7 +255,7 @@ var PHOTOS = {
     "pos": "50% 0%"
   },
   "Altostratus": {
-    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/2020-12-31_16_06_58_Altostratus_with_a_wavy_undulating_base_above_the_Dulles_section_of_Sterling%2C_Loudoun_County%2C_Virginia.jpg/1280px-2020-12-31_16_06_58_Altostratus_with_a_wavy_undulating_base_above_the_Dulles_section_of_Sterling%2C_Loudoun_County%2C_Virginia.jpg",
+    "src": "/photos/altostratus.jpg",
     "page": "https://commons.wikimedia.org/wiki/File:2020-12-31_16_06_58_Altostratus_with_a_wavy_undulating_base_above_the_Dulles_section_of_Sterling%2C_Loudoun_County%2C_Virginia.jpg",
     "author": "Famartin",
     "license": "CC BY-SA 4.0",
@@ -265,7 +265,7 @@ var PHOTOS = {
     "h": 960
   },
   "Nimbostratus": {
-    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/20151123Hockenheim1.jpg/1280px-20151123Hockenheim1.jpg",
+    "src": "/photos/nimbostratus.jpg",
     "page": "https://commons.wikimedia.org/wiki/File:20151123Hockenheim1.jpg",
     "author": "AnRo0002",
     "license": "CC0",
@@ -275,7 +275,7 @@ var PHOTOS = {
     "h": 960
   },
   "Stratus": {
-    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Stratus-Opacus-Uniformis.jpg/1280px-Stratus-Opacus-Uniformis.jpg",
+    "src": "/photos/stratus.jpg",
     "page": "https://commons.wikimedia.org/wiki/File:Stratus-Opacus-Uniformis.jpg",
     "author": "PiccoloNamek",
     "license": "CC BY-SA 3.0",
@@ -285,7 +285,7 @@ var PHOTOS = {
     "h": 889
   },
   "Stratocumulus": {
-    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Stratocumulus_lacunosus.jpg/1280px-Stratocumulus_lacunosus.jpg",
+    "src": "/photos/stratocumulus.jpg",
     "page": "https://commons.wikimedia.org/wiki/File:Stratocumulus_lacunosus.jpg",
     "author": "Berrucomons",
     "license": "CC BY-SA 3.0",
@@ -295,7 +295,7 @@ var PHOTOS = {
     "h": 853
   },
   "Cumulus": {
-    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Cumulus_humilis_clouds.jpg/1280px-Cumulus_humilis_clouds.jpg",
+    "src": "/photos/cumulus.jpg",
     "page": "https://commons.wikimedia.org/wiki/File:Cumulus_humilis_clouds.jpg",
     "author": "Toby Hudson",
     "license": "CC BY-SA 3.0",
@@ -305,7 +305,7 @@ var PHOTOS = {
     "h": 909
   },
   "Towering Cumulus": {
-    "src": "https://upload.wikimedia.org/wikipedia/commons/f/f4/Cumulus_congestus_cloud.jpg",
+    "src": "/photos/towering-cumulus.jpg",
     "page": "https://commons.wikimedia.org/wiki/File:Cumulus_congestus_cloud.jpg",
     "author": "Bidgee",
     "license": "CC BY-SA 3.0",
@@ -316,7 +316,7 @@ var PHOTOS = {
     "h": 930
   },
   "Cumulonimbus": {
-    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Cumulonimbus_incus_over_Warsaw%2C_Poland.jpg/1280px-Cumulonimbus_incus_over_Warsaw%2C_Poland.jpg",
+    "src": "/photos/cumulonimbus.jpg",
     "page": "https://commons.wikimedia.org/wiki/File:Cumulonimbus_incus_over_Warsaw%2C_Poland.jpg",
     "author": "Kamil Nowacki",
     "license": "CC BY-SA 4.0",
@@ -326,7 +326,7 @@ var PHOTOS = {
     "h": 854
   },
   "fallstreak_hole": {
-    "src": "https://upload.wikimedia.org/wikipedia/commons/d/dc/HolePunchCloud.jpg",
+    "src": "/photos/fallstreak-hole.jpg",
     "page": "https://commons.wikimedia.org/wiki/File:HolePunchCloud.jpg",
     "author": "H. Raab (User:Vesta)",
     "license": "CC BY-SA 3.0",
@@ -336,15 +336,15 @@ var PHOTOS = {
     "h": 682
   },
   "clear": {
-    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Cloudless_blue_sky_in_November_-_geograph.org.uk_-_8289272.jpg/1280px-Cloudless_blue_sky_in_November_-_geograph.org.uk_-_8289272.jpg",
+    "src": "/photos/clear-sky.jpg",
     "page": "https://commons.wikimedia.org/wiki/File:Cloudless_blue_sky_in_November_-_geograph.org.uk_-_8289272.jpg",
     "author": "Jaggery",
     "license": "CC BY-SA 2.0",
     "licUrl": "https://creativecommons.org/licenses/by-sa/2.0/",
     "alt": "A cloudless blue sky above trees",
     "pos": "50% 0%",
-    "w": 1280,
-    "h": 1370
+    "w": 960,
+    "h": 1028
   }
 };
 var PHOTO_EXTRA = {
