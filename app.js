@@ -44,6 +44,8 @@ var $ = function (id) { return document.getElementById(id); };
 document.querySelector("form.tool").addEventListener("submit", function (e) { e.preventDefault(); });
 var pick = $("pick"), drop = $("drop"), go = $("go"), result = $("result"), block = $("result-block"), pv = $("preview"), pvi = $("preview-img");
 var b64 = null, mime = null, fname = "", currentFile = null, lastTypes = null, lastConf = {}, lastFeature = null, lastReasoning = null, resultAt = null, photoAt = null;
+/* Where photoAt came from ("exif" = camera date, "file" = file date) and the size of the copy that is analyzed. */
+var photoSrc = null, sentW = null, sentH = null;
 
 var INFO = {
   "Cirrus":           { tier: "High level · above 20,000 ft", form: "cirrus = curl of hair; thin wisps and streaks", alt: "high tier, above 20,000 ft", text: "Thin white brushstrokes, often curled at one end. Fair weather today; sometimes the first hint of a change in a day or two." },
@@ -111,17 +113,17 @@ function render() {
 
 /* photo in */
 function shrink(dataUrl, maxEdge, cb) {
-  var done = false; function fin(u, t) { if (!done) { done = true; cb(u, t); } }
+  var done = false; function fin(u, t, w, h) { if (!done) { done = true; cb(u, t, w || null, h || null); } }
   setTimeout(function () { fin(dataUrl, mime); }, 20000);
   var img = new Image();
   img.onload = function () {
     try {
       var w = img.naturalWidth, h = img.naturalHeight, L = Math.max(w, h);
-      if (!w || L <= maxEdge) return fin(dataUrl, mime);
+      if (!w || L <= maxEdge) return fin(dataUrl, mime, w, h);
       var s = maxEdge / L, c = document.createElement("canvas");
       c.width = Math.round(w * s); c.height = Math.round(h * s);
       c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-      fin(c.toDataURL("image/jpeg", 0.85), "image/jpeg");
+      fin(c.toDataURL("image/jpeg", 0.85), "image/jpeg", c.width, c.height);
     } catch (e) { fin(dataUrl, mime); }
   };
   img.onerror = function () { fin(dataUrl, mime); };
@@ -150,8 +152,9 @@ function loadFile(f) {
   r.onload = function () {
     if (gen !== photoGen) return;
     pvi.src = r.result; pv.hidden = false; drop.hidden = true; $("reset-btn").disabled = false;
-    photoAt = exifDate(r.result) || (f.lastModified ? new Date(f.lastModified) : null);
-    shrink(r.result, 1200, function (u, t) { if (gen !== photoGen) return; mime = t; b64 = u.split(",")[1]; go.disabled = !b64; });
+    var ex = exifDate(r.result);
+    photoAt = ex || (f.lastModified ? new Date(f.lastModified) : null); photoSrc = ex ? "exif" : (photoAt ? "file" : null);
+    shrink(r.result, 1200, function (u, t, w, h) { if (gen !== photoGen) return; mime = t; b64 = u.split(",")[1]; sentW = w; sentH = h; go.disabled = !b64; });
   };
   r.readAsDataURL(f);
 }
@@ -161,7 +164,7 @@ pick.addEventListener("change", function (e) { loadFile(e.target.files && e.targ
 drop.addEventListener("drop", function (e) { loadFile(e.dataTransfer.files && e.dataTransfer.files[0]); });
 function resetAll() {
   photoGen++; if (inFlight) { inFlight.abort(); inFlight = null; }
-  currentFile = null; go.textContent = "Identify clouds";
+  currentFile = null; photoAt = null; photoSrc = null; sentW = null; sentH = null; go.textContent = "Identify clouds";
   pick.value = ""; b64 = null; pv.hidden = true; pvi.src = ""; drop.hidden = false; go.disabled = true; $("reset-btn").disabled = true;
   block.hidden = true; result.innerHTML = ""; lastTypes = null; $("fname").textContent = ""; highlight([]);
 }
@@ -200,7 +203,10 @@ go.addEventListener("click", function () {
     .then(function (token) {
       if (gen !== photoGen) throw { name: "AbortError", stale: true };
       if (ctrl) clientTimer = setTimeout(function () { ctrl.abort(); }, 40000);
-      return fetch(WORKER_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ image: b64, mediaType: mime, turnstile: token }), signal: ctrl ? ctrl.signal : undefined });
+      /* taken / takenSource / w / h feed the results log (no photo, no location); see the Disclaimer. */
+      var payload = { image: b64, mediaType: mime, turnstile: token, w: sentW, h: sentH };
+      if (photoAt) { payload.taken = photoAt.toISOString(); payload.takenSource = photoSrc; }
+      return fetch(WORKER_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload), signal: ctrl ? ctrl.signal : undefined });
     })
     .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, data: j }; }, function () { return { ok: r.ok, data: {} }; }); })
     .then(function (res) {
