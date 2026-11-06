@@ -123,15 +123,14 @@ function render() {
 /* ---- Archive line under a result: the archive number (for removal requests by email) and an optional location ---- */
 function archiveHtml() {
   if (!lastId) return "";
-  var mail = ["hello", "decodeclouds.com"].join("@");
   var hasExifLoc = exifInfo && typeof exifInfo.lat === "number";
   return '<section class="archive" id="archive">' +
-    '<p class="archive-id">Saved to the DecodeClouds archive as <b>#' + esc(lastId.slice(0, 8)) + '</b>' +
-    (hasExifLoc ? ", with the location recorded in the photo, rounded to about 1&nbsp;km" : "") +
-    '. To have it removed, email <a href="mailto:' + mail + '?subject=Remove%20photo%20%23' + esc(lastId.slice(0, 8)) + '">' + mail + "</a> with that number.</p>" +
+    '<p class="archive-id"><b>Thanks for contributing to science.</b> This photo is now in the open DecodeClouds archive' +
+    (hasExifLoc ? ", with the location your camera recorded, rounded to about 1&nbsp;km" : "") +
+    ' (#' + esc(lastId.slice(0, 8)) + ").</p>" +
     (hasExifLoc ? "" :
       '<div class="loc-line" id="loc-line"><button class="pill white" id="loc-btn" type="button">Use my location</button>' +
-      '<span class="hint">Adds where this was taken, rounded to about 1&nbsp;km, only if you’re still there.</span>' +
+      '<span class="hint">Where it was taken makes it more useful, rounded to about 1&nbsp;km. Only if you’re still there.</span>' +
       '<label class="check"><input type="checkbox" id="loc-exact"> Keep the exact spot</label></div>') +
     '<p class="archive-status" id="archive-status" hidden></p></section>';
 }
