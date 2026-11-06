@@ -7,6 +7,7 @@ The site is one static page (plain HTML, CSS and JavaScript, no build step) serv
 - `index.html`: the page markup, plus its Content-Security-Policy
 - `site.css`: styles
 - `app.js`: behavior (photo handling, the call to the worker, results, sharing)
+- `fonts/`: Source Serif 4 and Nunito (SIL Open Font License), served from this site
 - `CNAME`: custom domain for GitHub Pages
 - `.nojekyll`: serve files as-is, no Jekyll build
 - `robots.txt`, `sitemap.xml`
