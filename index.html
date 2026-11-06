@@ -7,7 +7,7 @@
 <meta name="referrer" content="strict-origin-when-cross-origin" />
 <title>DecodeClouds: Cloud Decoder</title>
 <link rel="canonical" href="https://decodeclouds.com/" />
-<meta name="description" content="Take a photo of the sky to identify the cloud. Free, no account, your photo isn't kept by this site." />
+<meta name="description" content="Take a photo of the sky to identify the cloud. Free, no account." />
 <meta property="og:title" content="DecodeClouds: Cloud Decoder" />
 <meta property="og:description" content="Take a photo of the sky to identify the cloud." />
 <meta property="og:url" content="https://decodeclouds.com/" />
@@ -17,7 +17,7 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 <link rel="preload" href="/fonts/nunito-latin-wght.woff2" as="font" type="font/woff2" crossorigin />
 <link rel="preload" href="/fonts/source-serif-4-latin-opsz.woff2" as="font" type="font/woff2" crossorigin />
-<link rel="stylesheet" href="/site.css?v=9a2f38cc" />
+<link rel="stylesheet" href="/site.css?v=d7a65621" />
 </head>
 <body id="top">
 
@@ -39,6 +39,7 @@
         <span class="drop-title"><span class="is-desktop">Drag a photo here, or <u>browse</u></span><span class="is-touch">Tap to take or choose a photo</span></span>
         <span class="drop-hint">JPG or PNG &middot; a wide shot of the sky works best</span>
       </label>
+      <p class="archive-note">Photos you identify join the open DecodeClouds archive for cloud and weather research (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>). Location only if you add it. <a href="#disclaimer">Details</a>.</p>
       <div class="preview" id="preview" hidden>
         <img id="preview-img" alt="Your sky photo" />
         <div class="file-row"><span class="fname" id="fname"></span><button class="save-link" id="save-btn" type="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>Save photo</button></div>
@@ -53,13 +54,6 @@
 </div>
 
 <main class="wrap">
-  <section class="block forget" id="forget-block" hidden>
-    <h2>Remove your photo from the archive?</h2>
-    <p>This deletes the photo and its record for good. Nothing happens until you press the button.</p>
-    <div class="act"><button class="pill primary" id="forget-btn" type="button">Remove photo</button><button class="pill white" id="forget-keep" type="button">Keep it</button></div>
-    <p class="forget-msg" id="forget-msg" aria-live="polite"></p>
-  </section>
-
   <section class="block" id="result-block" hidden>
     <h2>Result</h2>
     <div id="result"></div>
@@ -100,8 +94,8 @@
         <li>Federal Aviation Administration (FAA), <a href="https://www.faa.gov/sites/faa.gov/files/FAA-H-8083-28B.pdf" target="_blank" rel="noopener">FAA-H-8083-28B, <em>Aviation Weather Handbook</em></a> (2026). Cloud classification, the ten standard genera, and towering cumulus as a convective-hazard indicator.</li>
         <li>Federal Aviation Administration (FAA), <a href="https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/faa-h-8083-25c.pdf" target="_blank" rel="noopener">Pilot&rsquo;s Handbook of Aeronautical Knowledge (PHAK)</a>, Weather Theory chapter. The low, mid and high altitude bands on this page follow it.</li>
       </ul></div>
-    <div><h2>Disclaimer</h2>
-      <p>For educational purposes only. Photos uploaded for cloud identification are processed in real-time and are not stored, unless you choose to add one to the archive. We keep a log of each result (cloud types, confidence, the date the photo was taken, and the country); the photo itself is kept only if you add it to the archive. Cloud identification may be inaccurate or incomplete. Not for weather forecasting, aviation, or safety-critical decisions; consult official meteorological sources.</p></div>
+    <div id="disclaimer"><h2>Disclaimer</h2>
+      <p>For educational purposes only. Photos you identify are added to the DecodeClouds archive, an open collection of sky photos for cloud and weather research, together with the identification, the date the photo was taken, the camera model, and the country. Archive photos are released under the <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a> license. Location is included only if you add it, or if your camera wrote one into the photo, and is rounded to about 1 km unless you choose otherwise. Photograph the sky, not people. To have a photo removed, email <a href="#top" id="disclaimer-mail">hello at decodeclouds.com</a> with its archive number. Cloud identification may be inaccurate or incomplete. Not for weather forecasting, aviation, or safety-critical decisions; consult official meteorological sources.</p></div>
   </div>
   <div class="bar"><div class="wrap"><span>&copy; 2026 DecodeClouds</span><a href="#top">Back to top &uarr;</a></div></div>
 </footer>
@@ -120,6 +114,6 @@
 
 <div id="print"></div>
 
-<script src="/app.js?v=e0d52f70"></script>
+<script src="/app.js?v=24a67e0f"></script>
 </body>
 </html>

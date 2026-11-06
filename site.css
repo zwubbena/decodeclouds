@@ -143,25 +143,20 @@ footer .bar a { font-size: 13px; font-weight: 800; letter-spacing: .12em; text-t
   #print p { margin: 2pt 0; }
 }
 
-/* Archive: the opt-in offer under a result, and the removal confirmation */
-.contrib { margin-top: 22px; padding: 18px 20px 20px; border: 1px solid var(--tier-line); border-radius: 16px; background: var(--card); }
-.contrib h3 { margin: 0 0 6px; font-size: 18px; font-weight: 800; }
-.contrib p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted); }
-.contrib .contrib-loc { margin-top: 12px; }
-.contrib .loc-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; color: var(--ink); }
-.contrib .loc-line b { font-weight: 800; }
-.contrib .hint { font-size: 13px; color: var(--muted); }
-.contrib .check { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 14px; color: var(--ink); cursor: pointer; }
-.contrib .check input { width: 18px; height: 18px; accent-color: var(--go); }
-.contrib .act { margin-top: 14px; }
-.link-btn { border: 0; background: none; padding: 0; font: inherit; font-size: 13px; color: var(--head); text-decoration: underline; cursor: pointer; }
-.contrib-status { margin-top: 12px; font-size: 14px; }
-.contrib-status.err { color: #B3261E; }
-.contrib-status.ok p { color: var(--ink); }
-.forget-row { display: flex; gap: 8px; margin-top: 8px !important; }
-.forget-link { flex: 1 1 auto; min-width: 0; padding: 8px 10px; border: 1px solid var(--tier-line); border-radius: 10px; font: inherit; font-size: 13px; color: var(--ink); background: var(--page); }
-.forget .forget-msg { margin: 10px 0 0; font-size: 14px; color: var(--ink); }
-.forget .act { margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap; }
+/* Archive line under a result, and the note in the upload card */
+.archive-note { margin: 10px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--muted); }
+.archive-note a { color: var(--head); }
+.archive { margin-top: 18px; padding: 14px 18px 16px; border: 1px solid var(--tier-line); border-radius: 14px; background: var(--card); }
+.archive p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted); }
+.archive .archive-id b { color: var(--ink); font-weight: 800; }
+.archive .archive-id a { color: var(--head); }
+.archive .loc-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 12px; }
+.archive .hint { font-size: 13px; color: var(--muted); }
+.archive .check { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink); cursor: pointer; }
+.archive .check input { width: 17px; height: 17px; accent-color: var(--go); }
+.archive .archive-status { margin-top: 10px; }
+.archive .archive-status.ok { color: var(--go); font-weight: 700; }
+.archive .archive-status.err { color: #B3261E; }
 
 /* Example-photo pop-up for each cloud chip */
 .section-hint { margin: -8px 0 0; font-size: 14px; color: var(--muted); }
