@@ -310,6 +310,7 @@ var PHOTOS = {
     "license": "CC BY-SA 3.0",
     "licUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
     "alt": "A cumulus cloud building tall, its top bulging upward like a cauliflower",
+    "pos": "50% 10%",
     "w": 1000,
     "h": 930
   },
@@ -340,6 +341,7 @@ var PHOTOS = {
     "license": "CC BY-SA 2.0",
     "licUrl": "https://creativecommons.org/licenses/by-sa/2.0/",
     "alt": "A cloudless blue sky above trees",
+    "pos": "50% 0%",
     "w": 1280,
     "h": 1370
   }
@@ -359,7 +361,7 @@ var PHOTO_EXTRA = {
     $("pd-tier").textContent = info ? info.tier : extra.tier;
     $("pd-title").textContent = info ? key : extra.name;
     $("pd-text").textContent = info ? info.text : extra.text;
-    img.removeAttribute("src"); img.style.aspectRatio = p.w + " / " + p.h; img.alt = p.alt; img.src = p.src;
+    img.removeAttribute("src"); img.style.aspectRatio = p.w + " / " + p.h; img.style.objectPosition = p.pos || "50% 50%"; img.alt = p.alt; img.src = p.src;
     var c = $("pd-credit"); c.textContent = "Photo: " + p.author + " · ";
     c.appendChild(link(p.licUrl, p.license)); c.appendChild(document.createTextNode(" · via ")); c.appendChild(link(p.page, "Wikimedia Commons"));
     dlg.showModal();
