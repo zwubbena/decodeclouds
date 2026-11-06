@@ -214,14 +214,14 @@ go.addEventListener("click", function () {
    credited in the pop-up; loaded only when a visitor opens one, with no referrer sent. */
 var PHOTOS = {
   "Cirrus": {
-    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Cirrus_front_over_Austnesfjorden%2C_Austv%C3%A5g%C3%B8ya%2C_Lofoten%2C_Norway%2C_2015_April.jpg/1280px-Cirrus_front_over_Austnesfjorden%2C_Austv%C3%A5g%C3%B8ya%2C_Lofoten%2C_Norway%2C_2015_April.jpg",
-    "page": "https://commons.wikimedia.org/wiki/File:Cirrus_front_over_Austnesfjorden%2C_Austv%C3%A5g%C3%B8ya%2C_Lofoten%2C_Norway%2C_2015_April.jpg",
-    "author": "Ximonic (Simo Räsänen)",
+    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Cirrus_clouds_with_3D_look.jpg/1280px-Cirrus_clouds_with_3D_look.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Cirrus_clouds_with_3D_look.jpg",
+    "author": "Simon A. Eugster",
     "license": "CC BY-SA 3.0",
     "licUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
-    "alt": "Long, feathery streaks of cirrus fanning across a blue sky over a fjord in Lofoten, Norway",
+    "alt": "Thin white streaks of cirrus sweeping across a deep blue sky",
     "w": 1280,
-    "h": 693
+    "h": 851
   },
   "Cirrocumulus": {
     "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Cirrocumulus_clouds_Thousand_Oaks_July_2010.jpg/1280px-Cirrocumulus_clouds_Thousand_Oaks_July_2010.jpg",
@@ -234,24 +234,25 @@ var PHOTOS = {
     "h": 819
   },
   "Cirrostratus": {
-    "src": "https://upload.wikimedia.org/wikipedia/commons/9/9d/Cirrostratus_fibratus_with_22_degrees_halo.jpg",
-    "page": "https://commons.wikimedia.org/wiki/File:Cirrostratus_fibratus_with_22_degrees_halo.jpg",
-    "author": "Eduardo Marquetti",
-    "license": "CC BY-SA 2.0",
-    "licUrl": "https://creativecommons.org/licenses/by-sa/2.0/",
-    "alt": "A thin cirrostratus veil with a bright ring, a halo, around the sun, which is hidden behind a rock",
-    "w": 1024,
-    "h": 768
+    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Cs_nebulosus_with_faint_halo.jpg/1280px-Cs_nebulosus_with_faint_halo.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Cs_nebulosus_with_faint_halo.jpg",
+    "author": "Rollcloud",
+    "license": "Public domain",
+    "licUrl": "https://commons.wikimedia.org/wiki/File:Cs_nebulosus_with_faint_halo.jpg",
+    "alt": "A milky veil of cirrostratus across the sky, with the sun glowing through it and a faint halo",
+    "w": 1280,
+    "h": 960
   },
   "Altocumulus": {
-    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/Altocumulus.jpg/1280px-Altocumulus.jpg",
-    "page": "https://commons.wikimedia.org/wiki/File:Altocumulus.jpg",
-    "author": "Bidgee",
-    "license": "CC BY-SA 3.0",
-    "licUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
-    "alt": "Many small white and gray puffy patches spread across a blue sky",
+    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/V%C3%A1%C5%A1a_pond_near_Milevsko_%286%29.JPG/1280px-V%C3%A1%C5%A1a_pond_near_Milevsko_%286%29.JPG",
+    "page": "https://commons.wikimedia.org/wiki/File:V%C3%A1%C5%A1a_pond_near_Milevsko_%286%29.JPG",
+    "author": "Chmee2",
+    "license": "CC BY 3.0",
+    "licUrl": "https://creativecommons.org/licenses/by/3.0/",
+    "alt": "Rows of small rounded altocumulus patches with gray shading, above a pond and trees",
     "w": 1280,
-    "h": 851
+    "h": 820,
+    "pos": "50% 0%"
   },
   "Altostratus": {
     "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/2020-12-31_16_06_58_Altostratus_with_a_wavy_undulating_base_above_the_Dulles_section_of_Sterling%2C_Loudoun_County%2C_Virginia.jpg/1280px-2020-12-31_16_06_58_Altostratus_with_a_wavy_undulating_base_above_the_Dulles_section_of_Sterling%2C_Loudoun_County%2C_Virginia.jpg",
@@ -274,24 +275,24 @@ var PHOTOS = {
     "h": 960
   },
   "Stratus": {
-    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Stratus_clouds_Vodno_4.jpg/1280px-Stratus_clouds_Vodno_4.jpg",
-    "page": "https://commons.wikimedia.org/wiki/File:Stratus_clouds_Vodno_4.jpg",
-    "author": "kallerna",
-    "license": "CC BY-SA 4.0",
-    "licUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
-    "alt": "A flat layer of low stratus cloud filling the valley below a hilltop",
-    "w": 1280,
-    "h": 853
-  },
-  "Stratocumulus": {
-    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Stratocumulus_clouds_21072012.jpg/1280px-Stratocumulus_clouds_21072012.jpg",
-    "page": "https://commons.wikimedia.org/wiki/File:Stratocumulus_clouds_21072012.jpg",
-    "author": "Joydeep",
+    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Stratus-Opacus-Uniformis.jpg/1280px-Stratus-Opacus-Uniformis.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Stratus-Opacus-Uniformis.jpg",
+    "author": "PiccoloNamek",
     "license": "CC BY-SA 3.0",
     "licUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
-    "alt": "Large rounded lumps of stratocumulus with blue sky showing between them",
+    "alt": "A flat, uniform gray layer of low stratus hanging over a field",
     "w": 1280,
-    "h": 850
+    "h": 889
+  },
+  "Stratocumulus": {
+    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Stratocumulus_lacunosus.jpg/1280px-Stratocumulus_lacunosus.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Stratocumulus_lacunosus.jpg",
+    "author": "Berrucomons",
+    "license": "CC BY-SA 3.0",
+    "licUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "alt": "Dark gray lumps and rolls of stratocumulus with lighter gaps between them, above trees",
+    "w": 1280,
+    "h": 853
   },
   "Cumulus": {
     "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Cumulus_humilis_clouds.jpg/1280px-Cumulus_humilis_clouds.jpg",
