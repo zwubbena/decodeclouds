@@ -17,7 +17,7 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 <link rel="preload" href="/fonts/nunito-latin-wght.woff2" as="font" type="font/woff2" crossorigin />
 <link rel="preload" href="/fonts/source-serif-4-latin-opsz.woff2" as="font" type="font/woff2" crossorigin />
-<link rel="stylesheet" href="/site.css?v=79e58d26" />
+<link rel="stylesheet" href="/site.css?v=9a2f38cc" />
 </head>
 <body id="top">
 
@@ -53,6 +53,13 @@
 </div>
 
 <main class="wrap">
+  <section class="block forget" id="forget-block" hidden>
+    <h2>Remove your photo from the archive?</h2>
+    <p>This deletes the photo and its record for good. Nothing happens until you press the button.</p>
+    <div class="act"><button class="pill primary" id="forget-btn" type="button">Remove photo</button><button class="pill white" id="forget-keep" type="button">Keep it</button></div>
+    <p class="forget-msg" id="forget-msg" aria-live="polite"></p>
+  </section>
+
   <section class="block" id="result-block" hidden>
     <h2>Result</h2>
     <div id="result"></div>
@@ -89,11 +96,12 @@
       <ul>
         <li>World Meteorological Organization (WMO), <a href="https://cloudatlas.wmo.int/" target="_blank" rel="noopener">International Cloud Atlas</a>. Cloud identifications on this page are classified against its standard genera.</li>
         <li>Example cloud photos: Wikimedia Commons contributors, credited on each photo with its license.</li>
+        <li>Weather and terrain data attached to archive photos: NOAA <a href="https://aviationweather.gov/" target="_blank" rel="noopener">Aviation Weather Center</a> (METAR reports) and <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0).</li>
         <li>Federal Aviation Administration (FAA), <a href="https://www.faa.gov/sites/faa.gov/files/FAA-H-8083-28B.pdf" target="_blank" rel="noopener">FAA-H-8083-28B, <em>Aviation Weather Handbook</em></a> (2026). Cloud classification, the ten standard genera, and towering cumulus as a convective-hazard indicator.</li>
         <li>Federal Aviation Administration (FAA), <a href="https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/faa-h-8083-25c.pdf" target="_blank" rel="noopener">Pilot&rsquo;s Handbook of Aeronautical Knowledge (PHAK)</a>, Weather Theory chapter. The low, mid and high altitude bands on this page follow it.</li>
       </ul></div>
     <div><h2>Disclaimer</h2>
-      <p>For educational purposes only. Photos uploaded for cloud identification are processed in real-time and are not stored. We keep a log of each result (cloud types, confidence, the date the photo was taken, and the country), not your photo. Cloud identification may be inaccurate or incomplete. Not for weather forecasting, aviation, or safety-critical decisions; consult official meteorological sources.</p></div>
+      <p>For educational purposes only. Photos uploaded for cloud identification are processed in real-time and are not stored, unless you choose to add one to the archive. We keep a log of each result (cloud types, confidence, the date the photo was taken, and the country); the photo itself is kept only if you add it to the archive. Cloud identification may be inaccurate or incomplete. Not for weather forecasting, aviation, or safety-critical decisions; consult official meteorological sources.</p></div>
   </div>
   <div class="bar"><div class="wrap"><span>&copy; 2026 DecodeClouds</span><a href="#top">Back to top &uarr;</a></div></div>
 </footer>
@@ -112,6 +120,6 @@
 
 <div id="print"></div>
 
-<script src="/app.js?v=69a0b56f"></script>
+<script src="/app.js?v=e0d52f70"></script>
 </body>
 </html>
