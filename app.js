@@ -38,6 +38,8 @@ function getTurnstileToken() {
   });
 }
 var $ = function (id) { return document.getElementById(id); };
+/* Contact link: the address is assembled here rather than written in the HTML, so simple spam scrapers miss it. */
+(function () { var a = $("contact-link"); if (a) a.href = "mailto:" + ["hello", "decodeclouds.com"].join("@") + "?subject=" + encodeURIComponent("DecodeClouds"); })();
 document.querySelector("form.tool").addEventListener("submit", function (e) { e.preventDefault(); });
 var pick = $("pick"), drop = $("drop"), go = $("go"), result = $("result"), block = $("result-block"), pv = $("preview"), pvi = $("preview-img");
 var b64 = null, mime = null, fname = "", currentFile = null, lastTypes = null, lastConf = {}, lastFeature = null, lastReasoning = null, resultAt = null, photoAt = null;
