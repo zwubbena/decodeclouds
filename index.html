@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://challenges.cloudflare.com; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src https://decode-clouds.zwubbena.workers.dev; frame-src https://challenges.cloudflare.com; base-uri 'none'; form-action 'none'; object-src 'none'; manifest-src 'self'; upgrade-insecure-requests" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://challenges.cloudflare.com; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src https://decode-clouds.zwubbena.workers.dev; frame-src https://challenges.cloudflare.com; base-uri 'none'; form-action 'none'; object-src 'none'; upgrade-insecure-requests" />
 <meta name="referrer" content="strict-origin-when-cross-origin" />
 <title>DecodeClouds: Cloud Decoder</title>
 <link rel="canonical" href="https://decodeclouds.com/" />
-<meta name="description" content="Take a photo of the sky to identify the cloud. Free, no account, your photo isn't kept." />
+<meta name="description" content="Take a photo of the sky to identify the cloud. Free, no account, your photo isn't kept by this site." />
 <meta property="og:title" content="DecodeClouds: Cloud Decoder" />
 <meta property="og:description" content="Take a photo of the sky to identify the cloud." />
 <meta property="og:url" content="https://decodeclouds.com/" />
@@ -17,7 +17,7 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 <link rel="preload" href="/fonts/nunito-latin-wght.woff2" as="font" type="font/woff2" crossorigin />
 <link rel="preload" href="/fonts/source-serif-4-latin-opsz.woff2" as="font" type="font/woff2" crossorigin />
-<link rel="stylesheet" href="/site.css?v=ee0e984f" />
+<link rel="stylesheet" href="/site.css?v=79e58d26" />
 </head>
 <body id="top">
 
@@ -89,8 +89,8 @@
       <ul>
         <li>World Meteorological Organization (WMO), <a href="https://cloudatlas.wmo.int/" target="_blank" rel="noopener">International Cloud Atlas</a>. Cloud identifications on this page are classified against its standard genera.</li>
         <li>Example cloud photos: Wikimedia Commons contributors, credited on each photo with its license.</li>
-        <li>Federal Aviation Administration (FAA), <a href="https://www.faa.gov/sites/faa.gov/files/FAA-H-8083-28B.pdf" target="_blank" rel="noopener">FAA-H-8083-28, <em>Aviation Weather Handbook</em></a>. Cloud classification, the ten standard genera, and towering cumulus as a convective-hazard indicator.</li>
-        <li>Federal Aviation Administration (FAA), <a href="https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/faa-h-8083-25c.pdf" target="_blank" rel="noopener">Pilot&rsquo;s Handbook of Aeronautical Knowledge (PHAK)</a>, Aviation Weather chapter.</li>
+        <li>Federal Aviation Administration (FAA), <a href="https://www.faa.gov/sites/faa.gov/files/FAA-H-8083-28B.pdf" target="_blank" rel="noopener">FAA-H-8083-28B, <em>Aviation Weather Handbook</em></a> (2026). Cloud classification, the ten standard genera, and towering cumulus as a convective-hazard indicator.</li>
+        <li>Federal Aviation Administration (FAA), <a href="https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/faa-h-8083-25c.pdf" target="_blank" rel="noopener">Pilot&rsquo;s Handbook of Aeronautical Knowledge (PHAK)</a>, Weather Theory chapter. The low, mid and high altitude bands on this page follow it.</li>
       </ul></div>
     <div><h2>Disclaimer</h2>
       <p>For educational purposes only. Photos uploaded for cloud identification are processed in real-time and are not stored. Cloud identification may be inaccurate or incomplete. Not for weather forecasting, aviation, or safety-critical decisions; consult official meteorological sources.</p></div>
@@ -100,7 +100,7 @@
 
 <dialog id="photo-dialog" class="photo-dialog" aria-labelledby="pd-title">
   <button class="pd-close" id="pd-close" type="button" aria-label="Close photo">&times;</button>
-  <img id="pd-img" alt="" referrerpolicy="no-referrer" decoding="async" />
+  <img id="pd-img" alt="" decoding="async" />
   <div class="pd-missing" id="pd-missing" hidden><p>This photo didn&rsquo;t load.</p><a id="pd-missing-link" href="#" target="_blank" rel="noopener">See it on Wikimedia Commons</a></div>
   <div class="pd-body">
     <p class="eyebrow" id="pd-tier"></p>
@@ -112,6 +112,6 @@
 
 <div id="print"></div>
 
-<script src="/app.js?v=1b938e6d"></script>
+<script src="/app.js?v=c14e44f6"></script>
 </body>
 </html>

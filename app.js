@@ -1,5 +1,5 @@
 "use strict";
-/* This site's own worker — deploy from ../worker (see README). */
+/* This site's own worker: deployed with Wrangler from the local worker/ folder, which is not in the public repo. */
 var WORKER_URL = "https://decode-clouds.zwubbena.workers.dev/classify";
 /* Cloudflare Turnstile bot check. The site key is public. Empty = check off. */
 var TURNSTILE_SITEKEY = "0x4AAAAAAF1xtuj8d40wVGTB";
@@ -20,7 +20,8 @@ function getTurnstileToken() {
       var done = false;
       function finish(t) { if (!done) { done = true; tsWaiter = null; resolve(t || ""); } }
       tsWaiter = finish;
-      setTimeout(function () { finish(""); }, 20000);
+      /* Usually instant. If Cloudflare shows a checkbox instead, give the visitor time to click it. */
+      setTimeout(function () { finish(""); }, 60000);
       if (!window.turnstile) return finish("");
       try {
         if (tsWidget === null) {
@@ -75,7 +76,7 @@ function highlight(types, isResult) {
 
 function cardsHtml() {
   var h = "";
-  if (!lastTypes.length) h += '<article class="card"><div class="row"><p class="eyebrow">No clouds</p></div><h3>Clear sky</h3><p>No cloud types identified in this photo.</p></article>';
+  if (!lastTypes.length) h += '<article class="card"><div class="row"><p class="eyebrow">No clouds</p>' + confHtml(lastConf.CLR) + '</div><h3>Clear sky</h3><p>No cloud types identified in this photo.</p></article>';
   lastTypes.forEach(function (t) {
     var i = INFO[t] || { tier: "Cloud", text: "", form: "", alt: "" };
     h += '<article class="card"><div class="row"><p class="eyebrow">' + esc(i.tier) + "</p>" + confHtml(lastConf[t]) + "</div><h3>" + esc(t) + "</h3>" +
@@ -101,7 +102,7 @@ function render() {
   result.innerHTML = cardsHtml() + reasoningHtml() +
     '<div class="actions"><button class="pill white" id="pdf-btn" type="button">Download</button><button class="pill white" id="email-btn" type="button">Email</button><button class="pill white" id="text-btn" type="button">Text</button>' +
     '</div>' +
-    '<p class="share-hint">Email and Text open your phone’s share sheet with the photo attached. Download saves a PDF.</p>';
+    '<p class="share-hint">On a phone, Email and Text open the share sheet with the photo attached. Download opens the print dialog, where you can save a PDF.</p>';
   $("pdf-btn").addEventListener("click", downloadPdf);
   $("email-btn").addEventListener("click", function () { shareReport("email"); });
   $("text-btn").addEventListener("click", function () { shareReport("text"); });
@@ -136,16 +137,21 @@ function exifDate(dataUrl) {
     return (isNaN(d.getTime()) || d.getFullYear() < 2000 || d > new Date()) ? null : d;
   } catch (e) { return null; }
 }
+/* Each new photo (or Reset) bumps this, so a slow shrink or a reply for an earlier photo is ignored. */
+var photoGen = 0, inFlight = null;
 function loadFile(f) {
   if (!f || !/^image\//.test(f.type || "image/jpeg")) return;
+  var gen = ++photoGen; if (inFlight) { inFlight.abort(); inFlight = null; }
+  go.textContent = "Identify clouds"; go.disabled = true;
   fname = f.name; mime = f.type || "image/jpeg"; currentFile = f;
   $("fname").textContent = (f.name === "image.jpg" ? "Photo ready" : f.name) + " · " + Math.round(f.size / 1024) + " KB";
   block.hidden = true; result.innerHTML = ""; lastTypes = null; highlight([]);
   var r = new FileReader();
   r.onload = function () {
+    if (gen !== photoGen) return;
     pvi.src = r.result; pv.hidden = false; drop.hidden = true; $("reset-btn").disabled = false;
     photoAt = exifDate(r.result) || (f.lastModified ? new Date(f.lastModified) : null);
-    shrink(r.result, 1200, function (u, t) { mime = t; b64 = u.split(",")[1]; go.disabled = !b64; });
+    shrink(r.result, 1200, function (u, t) { if (gen !== photoGen) return; mime = t; b64 = u.split(",")[1]; go.disabled = !b64; });
   };
   r.readAsDataURL(f);
 }
@@ -154,7 +160,8 @@ pick.addEventListener("change", function (e) { loadFile(e.target.files && e.targ
 ["dragleave", "drop"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove("over"); }); });
 drop.addEventListener("drop", function (e) { loadFile(e.dataTransfer.files && e.dataTransfer.files[0]); });
 function resetAll() {
-  currentFile = null;
+  photoGen++; if (inFlight) { inFlight.abort(); inFlight = null; }
+  currentFile = null; go.textContent = "Identify clouds";
   pick.value = ""; b64 = null; pv.hidden = true; pvi.src = ""; drop.hidden = false; go.disabled = true; $("reset-btn").disabled = true;
   block.hidden = true; result.innerHTML = ""; lastTypes = null; $("fname").textContent = ""; highlight([]);
 }
@@ -187,15 +194,19 @@ go.addEventListener("click", function () {
   block.scrollIntoView({ behavior: "smooth", block: "start" });
   result.innerHTML = '<p class="loading">Reading the sky&hellip; usually 5 to 15 seconds.</p>';
   /* The worker gives up on the AI after 30 s and says so; this is a backstop if the network itself stalls. */
-  var ctrl = typeof AbortController === "function" ? new AbortController() : null, clientTimer = null;
+  var ctrl = typeof AbortController === "function" ? new AbortController() : null, clientTimer = null, gen = photoGen;
+  inFlight = ctrl;
   getTurnstileToken()
     .then(function (token) {
+      if (gen !== photoGen) throw { name: "AbortError", stale: true };
       if (ctrl) clientTimer = setTimeout(function () { ctrl.abort(); }, 40000);
       return fetch(WORKER_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ image: b64, mediaType: mime, turnstile: token }), signal: ctrl ? ctrl.signal : undefined });
     })
     .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, data: j }; }, function () { return { ok: r.ok, data: {} }; }); })
     .then(function (res) {
       clearTimeout(clientTimer);
+      if (gen !== photoGen) return;
+      inFlight = null;
       go.disabled = false; go.textContent = "Identify clouds";
       if (!res || !res.ok) { result.innerHTML = '<p class="err">' + esc((res && res.data && res.data.message) || "Couldn’t read that one. Try another photo.") + "</p>"; return; }
       var d = res.data || {};
@@ -204,6 +215,8 @@ go.addEventListener("click", function () {
     })
     .catch(function (err) {
       clearTimeout(clientTimer);
+      if (gen !== photoGen) return; /* the photo was changed or reset while this ran */
+      inFlight = null;
       go.disabled = false; go.textContent = "Identify clouds";
       var timedOut = err && err.name === "AbortError";
       result.innerHTML = '<p class="err">' + (timedOut ? "Sorry it took too long. Do me a favor. Try again." : "Couldn’t connect. Check your signal and try again.") + "</p>";
@@ -382,7 +395,12 @@ var PHOTO_EXTRA = {
     li.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openPhoto(key); } });
   });
   $("pd-close").addEventListener("click", function () { dlg.close(); });
-  dlg.addEventListener("click", function (e) { if (e.target === dlg) dlg.close(); });
+  /* Click on the dark backdrop closes; a click on the dialog's own scrollbar does not. */
+  dlg.addEventListener("click", function (e) {
+    if (e.target !== dlg) return;
+    var r = dlg.getBoundingClientRect();
+    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) dlg.close();
+  });
 })();
 
 /* stamps, filenames, share, print */
