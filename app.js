@@ -40,7 +40,7 @@ function getTurnstileToken() {
 var $ = function (id) { return document.getElementById(id); };
 document.querySelector("form.tool").addEventListener("submit", function (e) { e.preventDefault(); });
 var pick = $("pick"), drop = $("drop"), go = $("go"), result = $("result"), block = $("result-block"), pv = $("preview"), pvi = $("preview-img");
-var b64 = null, mime = null, fname = "", lastTypes = null, lastConf = {}, lastFeature = null, lastReasoning = null, resultAt = null, photoAt = null;
+var b64 = null, mime = null, fname = "", currentFile = null, lastTypes = null, lastConf = {}, lastFeature = null, lastReasoning = null, resultAt = null, photoAt = null;
 
 var INFO = {
   "Cirrus":           { tier: "High level · above 20,000 ft", form: "cirrus = curl of hair; thin wisps and streaks", alt: "high tier, above 20,000 ft", text: "Thin white brushstrokes, often curled at one end. Fair weather today; sometimes the first hint of a change in a day or two." },
@@ -105,7 +105,7 @@ function render() {
 /* photo in */
 function shrink(dataUrl, maxEdge, cb) {
   var done = false; function fin(u, t) { if (!done) { done = true; cb(u, t); } }
-  setTimeout(function () { fin(dataUrl, mime); }, 4000);
+  setTimeout(function () { fin(dataUrl, mime); }, 20000);
   var img = new Image();
   img.onload = function () {
     try {
@@ -132,7 +132,7 @@ function exifDate(dataUrl) {
 }
 function loadFile(f) {
   if (!f || !/^image\//.test(f.type || "image/jpeg")) return;
-  fname = f.name; mime = f.type || "image/jpeg";
+  fname = f.name; mime = f.type || "image/jpeg"; currentFile = f;
   $("fname").textContent = (f.name === "image.jpg" ? "Photo ready" : f.name) + " · " + Math.round(f.size / 1024) + " KB";
   block.hidden = true; result.innerHTML = ""; lastTypes = null; highlight([]);
   var r = new FileReader();
@@ -148,10 +148,32 @@ pick.addEventListener("change", function (e) { loadFile(e.target.files && e.targ
 ["dragleave", "drop"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove("over"); }); });
 drop.addEventListener("drop", function (e) { loadFile(e.dataTransfer.files && e.dataTransfer.files[0]); });
 function resetAll() {
+  currentFile = null;
   pick.value = ""; b64 = null; pv.hidden = true; pvi.src = ""; drop.hidden = false; go.disabled = true; $("reset-btn").disabled = true;
   block.hidden = true; result.innerHTML = ""; lastTypes = null; $("fname").textContent = ""; highlight([]);
 }
 $("reset-btn").addEventListener("click", resetAll);
+
+/* Save the original photo, before or after decoding, so a shot taken in the page isn't lost. */
+function isIOS() { return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1); }
+function savePhoto() {
+  if (!currentFile) return;
+  var type = currentFile.type || "image/jpeg";
+  var ext = type === "image/png" ? ".png" : type === "image/webp" ? ".webp" : type === "image/heic" ? ".heic" : ".jpg";
+  var name = currentFile.name && !/^image\.(jpe?g|png|heic)$/i.test(currentFile.name) ? currentFile.name
+    : "decodeclouds-sky_" + stampParts(photoAt || new Date()).iso + ext;
+  var file = new File([currentFile], name, { type: type });
+  try {
+    if (isIOS() && navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file] }).catch(function () {});
+      return;
+    }
+  } catch (e) {}
+  var url = URL.createObjectURL(file), a = document.createElement("a");
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+}
+$("save-btn").addEventListener("click", savePhoto);
 
 go.addEventListener("click", function () {
   if (!b64) return;
@@ -178,7 +200,7 @@ go.addEventListener("click", function () {
       clearTimeout(clientTimer);
       go.disabled = false; go.textContent = "Identify clouds";
       var timedOut = err && err.name === "AbortError";
-      result.innerHTML = '<p class="err">' + (timedOut ? "Identifying took too long this time. Please try again." : "Couldn’t connect. Check your signal and try again.") + "</p>";
+      result.innerHTML = '<p class="err">' + (timedOut ? "Sorry it took too long. Do me a favor. Try again." : "Couldn’t connect. Check your signal and try again.") + "</p>";
     });
 });
 

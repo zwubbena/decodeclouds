@@ -46,7 +46,9 @@ input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; over
 .drop-title u { color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 3px; }
 .drop-hint { font-size: 13px; color: var(--muted); }
 .is-touch { display: none; } @media (hover: none) and (pointer: coarse) { .is-touch { display: inline; } .is-desktop { display: none; } }
-.file-row { padding: 8px 4px 0; }
+.file-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 4px 0; }
+.save-link { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 2px; border: 0; background: none; color: var(--accent); font-family: var(--body); font-size: 14px; font-weight: 800; cursor: pointer; }
+.save-link:hover { color: var(--head); text-decoration: underline; text-underline-offset: 3px; }
 .fname { font-size: 13px; color: var(--muted); min-width: 0; overflow-wrap: anywhere; }
 .act { display: flex; gap: 10px; align-items: center; }
 .ts { display: flex; justify-content: center; } .ts:empty { display: none; }
