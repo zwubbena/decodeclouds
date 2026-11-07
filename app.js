@@ -201,6 +201,8 @@ function setLocOption() {
   locText.textContent = hasExif ? "Location found in the photo" : "Add my location";
   if (hasExif) locCheck.checked = true;
 }
+/* After an error the same photo may be tried again. */
+function unlockIdentify() { go.disabled = false; go.textContent = "Identify clouds"; setLocOption(); }
 /* Resolves to the browser position or null; never rejects, never waits more than 8 s. */
 function devicePosition() {
   if (!locCheck.checked || locCheck.disabled || !navigator.geolocation) return Promise.resolve(null);
@@ -382,7 +384,9 @@ $("save-btn").addEventListener("click", savePhoto);
 
 go.addEventListener("click", function () {
   if (!b64) return;
-  go.disabled = true; go.textContent = "Identifying…"; block.hidden = false;
+  /* The button and the location option belong to this analysis: both lock now and stay locked
+     after a result (no re-runs of the same photo); a new photo, Reset or an error unlocks them. */
+  go.disabled = true; go.textContent = "Identifying…"; locCheck.disabled = true; block.hidden = false;
   block.scrollIntoView({ behavior: "smooth", block: "start" });
   result.innerHTML = '<p class="loading">Reading the sky&hellip; usually 5 to 15 seconds.</p>';
   /* The worker gives up on the AI after 30 s and says so; this is a backstop if the network itself stalls. */
@@ -421,9 +425,9 @@ go.addEventListener("click", function () {
       clearTimeout(clientTimer);
       if (gen !== photoGen) return;
       inFlight = null;
-      go.disabled = false; go.textContent = "Identify clouds";
-      if (!res || !res.ok) { result.innerHTML = '<p class="err">' + esc((res && res.data && res.data.message) || "Couldn’t read that one. Try another photo.") + "</p>"; return; }
+      if (!res || !res.ok) { unlockIdentify(); result.innerHTML = '<p class="err">' + esc((res && res.data && res.data.message) || "Couldn’t read that one. Try another photo.") + "</p>"; return; }
       var d = res.data || {};
+      go.disabled = true; go.textContent = d.notSky ? "Done" : "Identified";
       if (d.notSky) {
         lastTypes = null; lastId = null; highlight([]);
         result.innerHTML = '<div class="cards"><article class="card"><div class="row"><p class="eyebrow">Not a sky photo</p></div><h3>Try a wide shot of the sky</h3><p>' + esc(d.message || "That doesn’t look like a photo of the sky.") + "</p></article></div>";
@@ -437,7 +441,7 @@ go.addEventListener("click", function () {
       clearTimeout(clientTimer);
       if (gen !== photoGen) return; /* the photo was changed or reset while this ran */
       inFlight = null;
-      go.disabled = false; go.textContent = "Identify clouds";
+      unlockIdentify();
       var timedOut = err && err.name === "AbortError";
       result.innerHTML = '<p class="err">' + (timedOut ? "Sorry it took too long. Do me a favor. Try again." : "Couldn’t connect. Check your signal and try again.") + "</p>";
     });
