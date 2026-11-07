@@ -161,6 +161,8 @@ footer .bar a { font-size: 13px; font-weight: 800; letter-spacing: .12em; text-t
 .archive .archive-status { margin-top: 10px; }
 .archive .archive-status.ok { color: var(--go); font-weight: 700; }
 .archive .archive-status.err { color: #B3261E; }
+.archive.archive-off { opacity: .6; }
+.archive.archive-off .pill:disabled { cursor: not-allowed; color: var(--muted); border-color: var(--line); }
 
 /* Example-photo pop-up for each cloud chip */
 .section-hint { margin: -8px 0 0; font-size: 14px; color: var(--muted); }

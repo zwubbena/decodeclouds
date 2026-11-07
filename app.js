@@ -124,6 +124,13 @@ function render() {
 
 /* ---- Archive line under a result: the archive number (for removal requests by email) and an optional location ---- */
 function archiveHtml() {
+  if (exampleKey) {
+    /* Example photos are never archived; show the block greyed out so visitors see what happens with their own. */
+    return '<section class="archive archive-off" id="archive" aria-disabled="true">' +
+      '<p class="archive-id"><b>Example photo.</b> Examples aren’t added to the archive. Your own photos are, and this is where their archive number appears.</p>' +
+      '<div class="loc-line"><button class="pill white" id="loc-btn" type="button" disabled>Use my location</button>' +
+      '<span class="hint">For your own photos: adds where it was taken, rounded to about 1&nbsp;km.</span></div></section>';
+  }
   if (!lastId) return "";
   var hasExifLoc = exifInfo && typeof exifInfo.lat === "number";
   return '<section class="archive" id="archive">' +
@@ -376,7 +383,7 @@ go.addEventListener("click", function () {
         return;
       }
       lastTypes = d.types || []; lastConf = d.confidence || {}; lastReasoning = d.reasoning || null; lastFeature = d.feature || null; resultAt = new Date();
-      lastId = (typeof d.id === "string" && /^[0-9a-f-]{36}$/.test(d.id)) ? d.id : null; locDone = false;
+      lastId = (!exampleKey && typeof d.id === "string" && /^[0-9a-f-]{36}$/.test(d.id)) ? d.id : null; locDone = false;
       render();
     })
     .catch(function (err) {
