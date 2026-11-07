@@ -63,6 +63,7 @@ var photoSrc = null, sentW = null, sentH = null;
 /* Archive: every identified photo is kept (said on the page). lastId is its archive id; exifInfo is what the camera recorded. */
 var ARCHIVE_URL = WORKER_URL.replace(/\/classify$/, "");
 var lastId = null, exifInfo = {}, locDone = false;
+var lastFlagged = false, flagBusy = false, labelSent = null; /* the misidentification flag and the optional "What was it?" answer */
 /* Set when the photo came from the "try an example" menu: sent as-is (no shrink) so the worker can recognize it and not archive it. */
 var exampleKey = null;
 
@@ -88,6 +89,15 @@ function confHtml(c) {
   if (!Object.prototype.hasOwnProperty.call(CONF_LABEL, c)) return "";
   return '<span class="conf ' + c + '"><span class="dots"><i></i><i></i><i></i></span>' + CONF_LABEL[c] + "</span>";
 }
+/* The misidentification flag beside the confidence of the main result. Hover: "Report misidentification";
+   one click flags the photo (is_flagged in the archive) and the icon fills. Only for archived photos. */
+var FLAG_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="flag-fill" d="M4 21V4h11l1 2h4v10h-7l-1-2H5"/><path d="M4 21V4"/></svg>';
+function confWithFlag(c) {
+  var conf = confHtml(c);
+  if (!lastId) return conf;
+  return '<span class="conf-wrap">' + conf + '<button class="flag-btn' + (lastFlagged ? " flagged" : "") + '" id="flag-icon" type="button" aria-pressed="' + (lastFlagged ? "true" : "false") +
+    '" aria-label="Report misidentification" data-tip="' + (lastFlagged ? "Flagged for review" : "Report misidentification") + '">' + FLAG_SVG + "</button></span>";
+}
 function featureName(fe) { return FEATURE[fe.type] || String(fe.type).replace(/_/g, " "); }
 function highlight(types, isResult) {
   document.querySelectorAll(".chips li[data-t]").forEach(function (el) { el.classList.toggle("hit", types.indexOf(el.getAttribute("data-t")) !== -1); });
@@ -97,10 +107,10 @@ function highlight(types, isResult) {
 
 function cardsHtml() {
   var h = "";
-  if (!lastTypes.length) h += '<article class="card"><div class="row"><p class="eyebrow">No clouds</p>' + confHtml(lastConf.CLR) + '</div><h3>Clear sky</h3><p>No cloud types identified in this photo.</p></article>';
-  lastTypes.forEach(function (t) {
+  if (!lastTypes.length) h += '<article class="card"><div class="row"><p class="eyebrow">No clouds</p>' + confWithFlag(lastConf.CLR) + '</div><h3>Clear sky</h3><p>No cloud types identified in this photo.</p></article>';
+  lastTypes.forEach(function (t, idx) {
     var i = INFO[t] || { tier: "Cloud", text: "", form: "", alt: "" };
-    h += '<article class="card"><div class="row"><p class="eyebrow">' + esc(i.tier) + "</p>" + confHtml(lastConf[t]) + "</div><h3>" + esc(t) + "</h3>" +
+    h += '<article class="card"><div class="row"><p class="eyebrow">' + esc(i.tier) + "</p>" + (idx === 0 ? confWithFlag(lastConf[t]) : confHtml(lastConf[t])) + "</div><h3>" + esc(t) + "</h3>" +
       (i.text ? "<p>" + esc(i.text) + "</p>" : "") +
       (i.form ? '<div class="details"><p class="eyebrow">Details for your brain</p><dl><dt>Form</dt><dd>' + esc(i.form) + "</dd><dt>Altitude</dt><dd>" + esc(i.alt) + "</dd></dl></div>" : "") + "</article>";
   });
@@ -129,6 +139,7 @@ function render() {
   $("email-btn").addEventListener("click", function () { shareReport("email"); });
   $("text-btn").addEventListener("click", function () { shareReport("text"); });
   if (lastId) wireArchive();
+  var fi = $("flag-icon"); if (fi) fi.addEventListener("click", flagResult);
   highlight(lastTypes, true);
 }
 
@@ -147,9 +158,7 @@ function archiveHtml() {
     '<p class="archive-id"><b>Thanks for contributing to science.</b> This photo is now in the open DecodeClouds archive' +
     (hasExifLoc ? ", with the location your camera recorded, rounded to about 1&nbsp;km" : "") +
     ' (#' + esc(lastId.slice(0, 8)) + ").</p>" +
-    '<div class="flag-line" id="flag-line"><span>Flag? What is it:</span> <select id="flag-select" aria-label="What is it">' +
-    ["Unknown", "Clear sky", "Cirrus", "Cirrocumulus", "Cirrostratus", "Altocumulus", "Altostratus", "Nimbostratus", "Stratus", "Stratocumulus", "Cumulus", "Towering Cumulus", "Cumulonimbus"].map(function (n) { return '<option value="' + esc(n) + '">' + esc(n) + "</option>"; }).join("") +
-    '</select> <button class="pill white" id="flag-btn" type="button">Send</button></div>' +
+    (lastFlagged ? flagLineHtml() : "") +
     (hasExifLoc ? "" :
       '<div class="loc-line" id="loc-line"><button class="pill white" id="loc-btn" type="button">Use my location</button>' +
       '<span class="hint">Where it was taken makes it more useful, rounded to about 1&nbsp;km. Only if you’re still there.</span>' +
@@ -164,18 +173,58 @@ function wireArchive() {
   var b = $("loc-btn"); if (b) b.addEventListener("click", askLocation);
   var f = $("flag-btn"); if (f) f.addEventListener("click", sendFlag);
 }
-/* "Flag? What is it": the visitor's own answer, saved beside the model's. */
+/* Optional follow-up once a result is flagged: what the visitor thinks it was. */
+function flagLineHtml() {
+  if (labelSent) return '<div class="flag-line" id="flag-line"><span>Thanks, noted: <b>' + esc(labelSent) + "</b>.</span></div>";
+  return '<div class="flag-line" id="flag-line"><span>What was it?</span> <select id="flag-select" aria-label="What was it">' +
+    ["Unknown", "Clear sky", "Cirrus", "Cirrocumulus", "Cirrostratus", "Altocumulus", "Altostratus", "Nimbostratus", "Stratus", "Stratocumulus", "Cumulus", "Towering Cumulus", "Cumulonimbus"].map(function (n) { return '<option value="' + esc(n) + '">' + esc(n) + "</option>"; }).join("") +
+    '</select> <button class="pill white" id="flag-btn" type="button">Send</button></div>';
+}
+function postFlag(payload) {
+  return getTurnstileToken()
+    .then(function (token) { payload.turnstile = token; return fetch(ARCHIVE_URL + "/flag", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) }); })
+    .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, data: j }; }, function () { return { ok: r.ok, data: {} }; }); });
+}
+/* The flag icon: one click reports a misidentification. The icon fills at once; the archive records it. */
+function flagResult() {
+  var btn = $("flag-icon"), id = lastId, gen = photoGen;
+  if (!btn || !id || lastFlagged || flagBusy) return;
+  flagBusy = true;
+  btn.classList.add("flagged"); btn.setAttribute("aria-pressed", "true"); showTip(btn, "Thanks! Flagged for review");
+  postFlag({ id: id })
+    .then(function (res) {
+      if (gen !== photoGen) return;
+      flagBusy = false;
+      if (!res.ok || !res.data || !res.data.ok) {
+        btn.classList.remove("flagged"); btn.setAttribute("aria-pressed", "false"); showTip(btn, (res.data && res.data.message) || "Couldn’t save that. Try again.", true);
+        return;
+      }
+      lastFlagged = true;
+      var arc = $("archive"); if (arc && !$("flag-line")) { var st = $("archive-status"); st.insertAdjacentHTML("beforebegin", flagLineHtml()); wireArchive(); }
+    })
+    .catch(function () { if (gen !== photoGen) return; flagBusy = false; btn.classList.remove("flagged"); btn.setAttribute("aria-pressed", "false"); showTip(btn, "Couldn’t connect. Try again.", true); });
+}
+var tipTimer = null;
+function showTip(btn, text, isError) {
+  btn.setAttribute("data-tip", text); btn.classList.add("show-tip"); btn.classList.toggle("tip-err", !!isError);
+  clearTimeout(tipTimer);
+  tipTimer = setTimeout(function () {
+    btn.classList.remove("show-tip", "tip-err");
+    btn.setAttribute("data-tip", btn.classList.contains("flagged") ? "Flagged for review" : "Report misidentification");
+  }, 2600);
+}
+/* "What was it?": the visitor's own answer, saved beside the model's. */
 function sendFlag() {
   var btn = $("flag-btn"), sel = $("flag-select"), id = lastId, gen = photoGen;
   if (!id || !sel) return;
   btn.disabled = true; btn.textContent = "Sending…";
-  getTurnstileToken()
-    .then(function (token) { return fetch(ARCHIVE_URL + "/flag", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: id, label: sel.value, turnstile: token }) }); })
-    .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, data: j }; }, function () { return { ok: r.ok, data: {} }; }); })
+  var label = sel.value;
+  postFlag({ id: id, label: label })
     .then(function (res) {
       if (gen !== photoGen) return;
       if (!res.ok || !res.data || !res.data.ok) { btn.disabled = false; btn.textContent = "Send"; archiveStatus((res.data && res.data.message) || "Couldn’t save that. Please try again.", "err"); return; }
-      var line = $("flag-line"); if (line) line.innerHTML = "<span>Thanks, noted: <b>" + esc(sel.value) + "</b>.</span>";
+      labelSent = label;
+      var line = $("flag-line"); if (line) line.outerHTML = flagLineHtml();
     })
     .catch(function () { if (gen !== photoGen) return; btn.disabled = false; btn.textContent = "Send"; archiveStatus("Couldn’t connect. Check your signal and try again.", "err"); });
 }
@@ -311,7 +360,7 @@ function loadFile(f, example) {
   fname = f.name; mime = f.type || "image/jpeg"; currentFile = f;
   $("fname").textContent = (f.name === "image.jpg" ? "Photo ready" : f.name) + " · " + Math.round(f.size / 1024) + " KB";
   block.hidden = true; result.innerHTML = ""; lastTypes = null; highlight([]);
-  lastId = null; exifInfo = {}; locDone = false;
+  lastId = null; exifInfo = {}; locDone = false; lastFlagged = false; flagBusy = false; labelSent = null;
   var r = new FileReader();
   r.onload = function () {
     if (gen !== photoGen) return;
@@ -349,7 +398,7 @@ drop.addEventListener("drop", function (e) { loadFile(e.dataTransfer.files && e.
 function resetAll() {
   photoGen++; if (inFlight) { inFlight.abort(); inFlight = null; }
   currentFile = null; photoAt = null; photoSrc = null; sentW = null; sentH = null; go.textContent = "Identify clouds";
-  lastId = null; exifInfo = {}; locDone = false; exampleKey = null; $("example").value = "";
+  lastId = null; exifInfo = {}; locDone = false; lastFlagged = false; flagBusy = false; labelSent = null; exampleKey = null; $("example").value = "";
   pick.value = ""; b64 = null; pv.hidden = true; pvi.src = ""; drop.hidden = false; go.disabled = true; $("reset-btn").disabled = true;
   block.hidden = true; result.innerHTML = ""; lastTypes = null; $("fname").textContent = ""; highlight([]);
 }
@@ -412,7 +461,7 @@ go.addEventListener("click", function () {
         return;
       }
       lastTypes = d.types || []; lastConf = d.confidence || {}; lastReasoning = d.reasoning || null; lastFeature = d.feature || null; resultAt = new Date();
-      lastId = (!exampleKey && typeof d.id === "string" && /^[0-9a-f-]{36}$/.test(d.id)) ? d.id : null; locDone = false;
+      lastId = (!exampleKey && typeof d.id === "string" && /^[0-9a-f-]{36}$/.test(d.id)) ? d.id : null; locDone = false; lastFlagged = false; flagBusy = false; labelSent = null;
       render();
     })
     .catch(function (err) {
