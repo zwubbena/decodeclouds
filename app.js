@@ -53,6 +53,8 @@ var photoSrc = null, sentW = null, sentH = null;
 /* Archive: every identified photo is kept (said on the page). lastId is its archive id; exifInfo is what the camera recorded. */
 var ARCHIVE_URL = WORKER_URL.replace(/\/classify$/, "");
 var lastId = null, exifInfo = {}, locDone = false;
+/* Set when the photo came from the "try an example" menu: sent as-is (no shrink) so the worker can recognize it and not archive it. */
+var exampleKey = null;
 
 var INFO = {
   "Cirrus":           { tier: "High level · above 20,000 ft", form: "cirrus = curl of hair; thin wisps and streaks", alt: "high tier, above 20,000 ft", text: "Thin white brushstrokes, often curled at one end. Fair weather today; sometimes the first hint of a change in a day or two." },
@@ -265,9 +267,10 @@ function exifDate(dataUrl) {
 }
 /* Each new photo (or Reset) bumps this, so a slow shrink or a reply for an earlier photo is ignored. */
 var photoGen = 0, inFlight = null;
-function loadFile(f) {
+function loadFile(f, example) {
   if (!f || !/^image\//.test(f.type || "image/jpeg")) return;
   var gen = ++photoGen; if (inFlight) { inFlight.abort(); inFlight = null; }
+  exampleKey = example || null;
   go.textContent = "Identify clouds"; go.disabled = true;
   fname = f.name; mime = f.type || "image/jpeg"; currentFile = f;
   $("fname").textContent = (f.name === "image.jpg" ? "Photo ready" : f.name) + " · " + Math.round(f.size / 1024) + " KB";
@@ -277,6 +280,12 @@ function loadFile(f) {
   r.onload = function () {
     if (gen !== photoGen) return;
     pvi.src = r.result; pv.hidden = false; drop.hidden = true; $("reset-btn").disabled = false;
+    if (example) {
+      /* Example photos go as-is; their date is not meaningful. */
+      exifInfo = {}; photoAt = null; photoSrc = null; mime = f.type; b64 = r.result.split(",")[1];
+      var im = new Image(); im.onload = function () { if (gen !== photoGen) return; sentW = im.naturalWidth; sentH = im.naturalHeight; go.disabled = false; }; im.onerror = function () { if (gen !== photoGen) return; go.disabled = false; }; im.src = r.result;
+      return;
+    }
     exifInfo = readExif(r.result);
     var ex = exifInstant(exifInfo) || exifDate(r.result);
     photoAt = ex || (f.lastModified ? new Date(f.lastModified) : null); photoSrc = ex ? "exif" : (photoAt ? "file" : null);
@@ -284,14 +293,27 @@ function loadFile(f) {
   };
   r.readAsDataURL(f);
 }
-pick.addEventListener("change", function (e) { loadFile(e.target.files && e.target.files[0]); });
+pick.addEventListener("change", function (e) { $("example").value = ""; loadFile(e.target.files && e.target.files[0]); });
+/* "Or try an example": fetch one of the site's own photos and treat it as the chosen file. */
+$("example").addEventListener("change", function () {
+  var key = this.value, p = PHOTOS[key]; if (!p) return;
+  var sel = this; sel.disabled = true;
+  fetch(p.src).then(function (r) { if (!r.ok) throw new Error("fetch"); return r.blob(); })
+    .then(function (blob) {
+      var name = "example-" + key.toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".jpg";
+      loadFile(new File([blob], name, { type: blob.type || "image/jpeg" }), key);
+      $("fname").textContent = "Example: " + (INFO[key] ? key : (PHOTO_EXTRA[key] ? PHOTO_EXTRA[key].name : key));
+    })
+    .catch(function () { sel.value = ""; })
+    .then(function () { sel.disabled = false; });
+});
 ["dragenter", "dragover"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add("over"); }); });
 ["dragleave", "drop"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove("over"); }); });
 drop.addEventListener("drop", function (e) { loadFile(e.dataTransfer.files && e.dataTransfer.files[0]); });
 function resetAll() {
   photoGen++; if (inFlight) { inFlight.abort(); inFlight = null; }
   currentFile = null; photoAt = null; photoSrc = null; sentW = null; sentH = null; go.textContent = "Identify clouds";
-  lastId = null; exifInfo = {}; locDone = false;
+  lastId = null; exifInfo = {}; locDone = false; exampleKey = null; $("example").value = "";
   pick.value = ""; b64 = null; pv.hidden = true; pvi.src = ""; drop.hidden = false; go.disabled = true; $("reset-btn").disabled = true;
   block.hidden = true; result.innerHTML = ""; lastTypes = null; $("fname").textContent = ""; highlight([]);
 }
@@ -333,6 +355,7 @@ go.addEventListener("click", function () {
       /* The photo's own facts go with it: date, size, camera, and GPS if the camera wrote one (rounded server-side). See the Disclaimer. */
       var payload = { image: b64, mediaType: mime, turnstile: token, w: sentW, h: sentH, tzOffsetMin: -new Date().getTimezoneOffset() };
       if (photoAt) { payload.taken = photoAt.toISOString(); payload.takenSource = photoSrc; }
+      if (exampleKey) payload.example = exampleKey;
       if (exifInfo) {
         if (typeof exifInfo.lat === "number") { payload.lat = exifInfo.lat; payload.lon = exifInfo.lon; if (typeof exifInfo.altitude === "number") payload.altitudeM = exifInfo.altitude; }
         if (exifInfo.make) payload.cameraMake = exifInfo.make; if (exifInfo.model) payload.cameraModel = exifInfo.model;

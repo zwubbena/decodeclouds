@@ -143,6 +143,10 @@ footer .bar a { font-size: 13px; font-weight: 800; letter-spacing: .12em; text-t
   #print p { margin: 2pt 0; }
 }
 
+/* "Or try an example" menu in the upload card */
+.example-row { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; font-size: 13px; color: var(--muted); }
+.example-row select { font: inherit; font-size: 13px; color: var(--ink); padding: 5px 8px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--card); max-width: 60%; }
+
 /* Archive line under a result, and the note in the upload card */
 .archive-note { margin: 10px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--muted); }
 .archive-note a { color: var(--head); }

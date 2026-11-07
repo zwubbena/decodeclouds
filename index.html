@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://challenges.cloudflare.com; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src https://decode-clouds.zwubbena.workers.dev; frame-src https://challenges.cloudflare.com; base-uri 'none'; form-action 'none'; object-src 'none'; upgrade-insecure-requests" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://challenges.cloudflare.com; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://decode-clouds.zwubbena.workers.dev; frame-src https://challenges.cloudflare.com; base-uri 'none'; form-action 'none'; object-src 'none'; upgrade-insecure-requests" />
 <meta name="referrer" content="strict-origin-when-cross-origin" />
 <title>DecodeClouds: Cloud Decoder</title>
 <link rel="canonical" href="https://decodeclouds.com/" />
@@ -17,7 +17,7 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 <link rel="preload" href="/fonts/nunito-latin-wght.woff2" as="font" type="font/woff2" crossorigin />
 <link rel="preload" href="/fonts/source-serif-4-latin-opsz.woff2" as="font" type="font/woff2" crossorigin />
-<link rel="stylesheet" href="/site.css?v=d7a65621" />
+<link rel="stylesheet" href="/site.css?v=49e17474" />
 </head>
 <body id="top">
 
@@ -39,6 +39,14 @@
         <span class="drop-title"><span class="is-desktop">Drag a photo here, or <u>browse</u></span><span class="is-touch">Tap to take or choose a photo</span></span>
         <span class="drop-hint">JPG or PNG &middot; a wide shot of the sky works best</span>
       </label>
+      <p class="example-row">Or try an example: <select id="example" aria-label="Example photo">
+        <option value="">Choose a cloud</option>
+        <option value="Cirrus">Cirrus</option><option value="Cirrocumulus">Cirrocumulus</option><option value="Cirrostratus">Cirrostratus</option>
+        <option value="Altocumulus">Altocumulus</option><option value="Altostratus">Altostratus</option>
+        <option value="Stratus">Stratus</option><option value="Stratocumulus">Stratocumulus</option><option value="Cumulus">Cumulus</option>
+        <option value="Nimbostratus">Nimbostratus</option><option value="Towering Cumulus">Towering cumulus</option><option value="Cumulonimbus">Cumulonimbus</option>
+        <option value="fallstreak_hole">Fallstreak hole</option><option value="clear">Clear sky</option>
+      </select></p>
       <p class="archive-note">Every photo you identify helps science: it joins the open DecodeClouds archive. <a href="#disclaimer">Details</a>.</p>
       <div class="preview" id="preview" hidden>
         <img id="preview-img" alt="Your sky photo" />
@@ -114,6 +122,6 @@
 
 <div id="print"></div>
 
-<script src="/app.js?v=8957e80f"></script>
+<script src="/app.js?v=2d30e816"></script>
 </body>
 </html>
