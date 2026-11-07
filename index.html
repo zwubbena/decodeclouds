@@ -19,7 +19,7 @@
 <link rel="preload" href="/fonts/nunito-latin-wght.woff2" as="font" type="font/woff2" crossorigin />
 <link rel="preload" href="/fonts/source-serif-4-latin-opsz.woff2" as="font" type="font/woff2" crossorigin />
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"DecodeClouds","alternateName":"Cloud Decoder","url":"https://decodeclouds.com/","description":"Take a photo of the sky to identify the cloud. Free, no account.","applicationCategory":"EducationalApplication","operatingSystem":"Any","isAccessibleForFree":true,"author":{"@type":"Person","name":"Zane Wubbena","honorificPrefix":"Dr.","url":"https://zanewubbena.com/"},"creator":{"@type":"Person","name":"Zane Wubbena","url":"https://zanewubbena.com/"}}</script>
-<link rel="stylesheet" href="/site.css?v=894ffc07" />
+<link rel="stylesheet" href="/site.css?v=8085d118" />
 </head>
 <body id="top">
 
@@ -59,6 +59,7 @@
         <button class="pill primary" id="go" type="button" disabled>Identify clouds</button>
         <button class="pill ghost-pill" id="reset-btn" type="button" disabled><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>Reset</button>
       </div>
+      <label class="check loc-opt" id="loc-opt"><input type="checkbox" id="loc-check"> <span id="loc-text">Add my location</span> <span class="hint">(rounded to about 1 km)</span></label>
     </form>
   </section>
 </div>
@@ -105,7 +106,7 @@
         <li>Federal Aviation Administration (FAA), <a href="https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/faa-h-8083-25c.pdf" target="_blank" rel="noopener">Pilot&rsquo;s Handbook of Aeronautical Knowledge (PHAK)</a>, Weather Theory chapter. The low, mid and high altitude bands on this page follow it.</li>
       </ul></div>
     <div id="disclaimer"><h2>Disclaimer</h2>
-      <p>For educational purposes only. Photos you identify are added to the DecodeClouds archive, an open collection of sky photos for cloud and weather research, together with the identification, the date the photo was taken, the camera model, and the country. Archive photos are released under the <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a> license. Location is included only if you add it, or if your camera wrote one into the photo, and is rounded to about 1 km unless you choose otherwise. To have a photo removed, email <a href="#top" id="disclaimer-mail">hello at decodeclouds.com</a> with its archive number. Cloud identification may be inaccurate or incomplete.</p></div>
+      <p>For educational purposes only. Photos you identify are added to the DecodeClouds archive, an open collection of sky photos for cloud and weather research, together with the identification, the date the photo was taken, the camera model, and the country. Archive photos are released under the <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a> license. Location is included only if you add it, or if your camera wrote one into the photo, and is rounded to about 1 km. To have a photo removed, email <a href="#top" id="disclaimer-mail">hello at decodeclouds.com</a> with its archive number. Cloud identification may be inaccurate or incomplete.</p></div>
   </div>
   <div class="bar"><div class="wrap"><span>&copy; 2026 DecodeClouds</span><a href="#top">Back to top &uarr;</a></div></div>
 </footer>
@@ -124,6 +125,6 @@
 
 <div id="print"></div>
 
-<script src="/app.js?v=a81c25b5"></script>
+<script src="/app.js?v=45ca4b3e"></script>
 </body>
 </html>

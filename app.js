@@ -62,8 +62,8 @@ var b64 = null, mime = null, fname = "", currentFile = null, lastTypes = null, l
 var photoSrc = null, sentW = null, sentH = null;
 /* Archive: every identified photo is kept (said on the page). lastId is its archive id; exifInfo is what the camera recorded. */
 var ARCHIVE_URL = WORKER_URL.replace(/\/classify$/, "");
-var lastId = null, exifInfo = {}, locDone = false;
-var lastFlagged = false, flaggedTypes = {}, flagBusy = {}, labelSent = null; /* the misidentification flags (one per result card) and the optional "What was it?" answer */
+var lastId = null, exifInfo = {}, locSent = null; /* locSent: "exif" | "device" | "failed" | null, for the archive line */
+var lastFlagged = false, flaggedTypes = {}, flagBusy = {}; /* the misidentification flags, one per result card */
 /* Set when the photo came from the "try an example" menu: sent as-is (no shrink) so the worker can recognize it and not archive it. */
 var exampleKey = null;
 
@@ -140,47 +140,24 @@ function render() {
   $("pdf-btn").addEventListener("click", downloadPdf);
   $("email-btn").addEventListener("click", function () { shareReport("email"); });
   $("text-btn").addEventListener("click", function () { shareReport("text"); });
-  if (lastId) wireArchive();
   document.querySelectorAll(".flag-btn").forEach(function (b) { b.addEventListener("click", flagResult); });
   highlight(lastTypes, true);
 }
 
-/* ---- Archive line under a result: the archive number (for removal requests by email) and an optional location ---- */
+/* ---- Archive line under a result: the archive number (for removal requests by email). ---- */
 function archiveHtml() {
   if (exampleKey) {
     /* Example photos are never archived; show the block greyed out so visitors see what happens with their own. */
     return '<section class="archive archive-off" id="archive" aria-disabled="true">' +
-      '<p class="archive-id"><b>Example photo.</b> Examples aren’t added to the archive. Your own photos are, and this is where their archive number appears.</p>' +
-      '<div class="loc-line"><button class="pill white" id="loc-btn" type="button" disabled>Use my location</button>' +
-      '<span class="hint">For your own photos: adds where it was taken, rounded to about 1&nbsp;km.</span></div></section>';
+      '<p class="archive-id"><b>Example photo.</b> Examples aren’t added to the archive. Your own photos are, and this is where their archive number appears.</p></section>';
   }
   if (!lastId) return "";
-  var hasExifLoc = exifInfo && typeof exifInfo.lat === "number";
   return '<section class="archive" id="archive">' +
     '<p class="archive-id"><b>Thanks for contributing to science.</b> This photo is now in the open DecodeClouds archive' +
-    (hasExifLoc ? ", with the location your camera recorded, rounded to about 1&nbsp;km" : "") +
-    ' (#' + esc(lastId.slice(0, 8)) + ").</p>" +
-    (hasExifLoc ? "" :
-      '<div class="loc-line" id="loc-line"><button class="pill white" id="loc-btn" type="button">Use my location</button>' +
-      '<span class="hint">Where it was taken makes it more useful, rounded to about 1&nbsp;km. Only if you’re still there.</span>' +
-      '<label class="check"><input type="checkbox" id="loc-exact"> Keep the exact spot</label></div>') +
-    (lastFlagged ? flagLineHtml() : "") +
-    '<p class="archive-status" id="archive-status" hidden></p></section>';
-}
-function fmtLoc(lat, lon, exact) {
-  var d = exact ? 5 : 2;
-  return Math.abs(lat).toFixed(d) + "°" + (lat < 0 ? "S" : "N") + ", " + Math.abs(lon).toFixed(d) + "°" + (lon < 0 ? "W" : "E");
-}
-function wireArchive() {
-  var b = $("loc-btn"); if (b) b.addEventListener("click", askLocation);
-  var f = $("flag-btn"); if (f) f.addEventListener("click", sendFlag);
-}
-/* Optional follow-up once a result is flagged: what the visitor thinks it was. */
-function flagLineHtml() {
-  if (labelSent) return '<div class="flag-line" id="flag-line"><span>Thanks, noted: <b>' + esc(labelSent) + "</b>.</span></div>";
-  return '<div class="flag-line" id="flag-line"><span>What was it?</span> <select id="flag-select" aria-label="What was it">' +
-    ["Unknown", "Clear sky", "Cirrus", "Cirrocumulus", "Cirrostratus", "Altocumulus", "Altostratus", "Nimbostratus", "Stratus", "Stratocumulus", "Cumulus", "Towering Cumulus", "Cumulonimbus"].map(function (n) { return '<option value="' + esc(n) + '">' + esc(n) + "</option>"; }).join("") +
-    '</select> <button class="pill white" id="flag-btn" type="button">Send</button></div>';
+    (locSent === "exif" ? ", with the location your camera recorded, rounded to about 1&nbsp;km" :
+     locSent === "device" ? ", with your location, rounded to about 1&nbsp;km" :
+     locSent === "failed" ? " (your location wasn’t available, so it went in without one)" : "") +
+    ' (#' + esc(lastId.slice(0, 8)) + ").</p></section>";
 }
 function postFlag(payload) {
   return getTurnstileToken()
@@ -203,10 +180,6 @@ function flagResult(e) {
       flagBusy[type] = false;
       if (!res.ok || !res.data || !res.data.ok) { setFlag(btn, undo); showTip(btn, (res.data && res.data.message) || "Couldn’t save that. Try again.", true); return; }
       flaggedTypes[type] = !undo;
-      lastFlagged = Object.keys(flaggedTypes).some(function (k) { return flaggedTypes[k]; });
-      var line = $("flag-line");
-      if (lastFlagged && !line && $("archive")) { $("archive-status").insertAdjacentHTML("beforebegin", flagLineHtml()); wireArchive(); }
-      if (!lastFlagged && line && !labelSent) line.remove();
     })
     .catch(function () { if (gen !== photoGen) return; flagBusy[type] = false; setFlag(btn, undo); showTip(btn, "Couldn’t connect. Try again.", true); });
 }
@@ -218,49 +191,25 @@ function showTip(btn, text, isError) {
     btn.setAttribute("data-tip", btn.classList.contains("flagged") ? TIP_ON : TIP_OFF);
   }, 2600);
 }
-/* "What was it?": the visitor's own answer, saved beside the model's. */
-function sendFlag() {
-  var btn = $("flag-btn"), sel = $("flag-select"), id = lastId, gen = photoGen;
-  if (!id || !sel) return;
-  btn.disabled = true; btn.textContent = "Sending…";
-  var label = sel.value;
-  postFlag({ id: id, label: label })
-    .then(function (res) {
-      if (gen !== photoGen) return;
-      if (!res.ok || !res.data || !res.data.ok) { btn.disabled = false; btn.textContent = "Send"; archiveStatus((res.data && res.data.message) || "Couldn’t save that. Please try again.", "err"); return; }
-      labelSent = label;
-      var line = $("flag-line"); if (line) line.outerHTML = flagLineHtml();
-    })
-    .catch(function () { if (gen !== photoGen) return; btn.disabled = false; btn.textContent = "Send"; archiveStatus("Couldn’t connect. Check your signal and try again.", "err"); });
+
+/* ---- "Add my location" (upload card): asked for when Identify clouds is clicked, sent with the photo. ---- */
+var locCheck = $("loc-check"), locOpt = $("loc-opt"), locText = $("loc-text");
+function setLocOption() {
+  var hasExif = !exampleKey && exifInfo && typeof exifInfo.lat === "number";
+  locOpt.hidden = !!exampleKey;
+  locCheck.disabled = hasExif;
+  locText.textContent = hasExif ? "Location found in the photo" : "Add my location";
+  if (hasExif) locCheck.checked = true;
 }
-function archiveStatus(text, cls) { var st = $("archive-status"); if (!st) return; st.textContent = text; st.className = "archive-status " + (cls || ""); st.hidden = false; }
-function askLocation() {
-  var b = $("loc-btn"), id = lastId, gen = photoGen;
-  if (!id || locDone) return;
-  if (!navigator.geolocation) { archiveStatus("Location isn’t available in this browser.", "err"); return; }
-  b.disabled = true; b.textContent = "Finding you…";
-  navigator.geolocation.getCurrentPosition(function (pos) {
-    if (gen !== photoGen) return;
-    var c = pos.coords, exact = !!($("loc-exact") && $("loc-exact").checked);
-    var payload = { id: id, lat: c.latitude, lon: c.longitude, exact: exact };
-    if (typeof c.accuracy === "number") payload.locAccuracyM = c.accuracy;
-    if (typeof c.altitude === "number" && isFinite(c.altitude)) payload.altitudeM = c.altitude;
-    b.textContent = "Saving…";
-    getTurnstileToken()
-      .then(function (token) { payload.turnstile = token; return fetch(ARCHIVE_URL + "/locate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) }); })
-      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, data: j }; }, function () { return { ok: r.ok, data: {} }; }); })
-      .then(function (res) {
-        if (gen !== photoGen) return;
-        if (!res.ok || !res.data || !res.data.ok) { b.disabled = false; b.textContent = "Use my location"; archiveStatus((res.data && res.data.message) || "Couldn’t add the location. Please try again.", "err"); return; }
-        locDone = true; var line = $("loc-line"); if (line) line.hidden = true;
-        archiveStatus("Location added: " + fmtLoc(res.data.lat, res.data.lon, res.data.exact) + (res.data.exact ? " (exact)" : " (rounded to about 1 km)") + ".", "ok");
-      })
-      .catch(function () { if (gen !== photoGen) return; b.disabled = false; b.textContent = "Use my location"; archiveStatus("Couldn’t connect. Check your signal and try again.", "err"); });
-  }, function () {
-    if (gen !== photoGen) return;
-    b.disabled = false; b.textContent = "Use my location";
-    archiveStatus("Couldn’t get your location. The photo is saved without one.", "err");
-  }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+/* Resolves to the browser position or null; never rejects, never waits more than 8 s. */
+function devicePosition() {
+  if (!locCheck.checked || locCheck.disabled || !navigator.geolocation) return Promise.resolve(null);
+  return new Promise(function (resolve) {
+    var done = false;
+    function finish(p) { if (!done) { done = true; resolve(p); } }
+    navigator.geolocation.getCurrentPosition(function (pos) { finish(pos.coords); }, function () { finish(null); }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 120000 });
+    setTimeout(function () { finish(null); }, 9000);
+  });
 }
 
 /* photo in */
@@ -365,18 +314,18 @@ function loadFile(f, example) {
   fname = f.name; mime = f.type || "image/jpeg"; currentFile = f;
   $("fname").textContent = (f.name === "image.jpg" ? "Photo ready" : f.name) + " · " + Math.round(f.size / 1024) + " KB";
   block.hidden = true; result.innerHTML = ""; lastTypes = null; highlight([]);
-  lastId = null; exifInfo = {}; locDone = false; lastFlagged = false; flaggedTypes = {}; flagBusy = {}; labelSent = null;
+  lastId = null; exifInfo = {}; locSent = null; lastFlagged = false; flaggedTypes = {}; flagBusy = {};
   var r = new FileReader();
   r.onload = function () {
     if (gen !== photoGen) return;
     pvi.src = r.result; pv.hidden = false; drop.hidden = true; $("reset-btn").disabled = false;
     if (example) {
       /* Example photos go as-is; their date is not meaningful. */
-      exifInfo = {}; photoAt = null; photoSrc = null; mime = f.type; b64 = r.result.split(",")[1];
+      exifInfo = {}; photoAt = null; photoSrc = null; mime = f.type; b64 = r.result.split(",")[1]; setLocOption();
       var im = new Image(); im.onload = function () { if (gen !== photoGen) return; sentW = im.naturalWidth; sentH = im.naturalHeight; go.disabled = false; }; im.onerror = function () { if (gen !== photoGen) return; go.disabled = false; }; im.src = r.result;
       return;
     }
-    exifInfo = readExif(r.result);
+    exifInfo = readExif(r.result); setLocOption();
     var ex = exifInstant(exifInfo) || exifDate(r.result);
     photoAt = ex || (f.lastModified ? new Date(f.lastModified) : null); photoSrc = ex ? "exif" : (photoAt ? "file" : null);
     shrink(r.result, 1200, function (u, t, w, h) { if (gen !== photoGen) return; mime = t; b64 = u.split(",")[1]; sentW = w; sentH = h; go.disabled = !b64; });
@@ -403,9 +352,10 @@ drop.addEventListener("drop", function (e) { loadFile(e.dataTransfer.files && e.
 function resetAll() {
   photoGen++; if (inFlight) { inFlight.abort(); inFlight = null; }
   currentFile = null; photoAt = null; photoSrc = null; sentW = null; sentH = null; go.textContent = "Identify clouds";
-  lastId = null; exifInfo = {}; locDone = false; lastFlagged = false; flaggedTypes = {}; flagBusy = {}; labelSent = null; exampleKey = null; $("example").value = "";
+  lastId = null; exifInfo = {}; locSent = null; lastFlagged = false; flaggedTypes = {}; flagBusy = {}; exampleKey = null; $("example").value = "";
   pick.value = ""; b64 = null; pv.hidden = true; pvi.src = ""; drop.hidden = false; go.disabled = true; $("reset-btn").disabled = true;
   block.hidden = true; result.innerHTML = ""; lastTypes = null; $("fname").textContent = ""; highlight([]);
+  setLocOption();
 }
 $("reset-btn").addEventListener("click", resetAll);
 
@@ -438,17 +388,31 @@ go.addEventListener("click", function () {
   /* The worker gives up on the AI after 30 s and says so; this is a backstop if the network itself stalls. */
   var ctrl = typeof AbortController === "function" ? new AbortController() : null, clientTimer = null, gen = photoGen;
   inFlight = ctrl;
-  getTurnstileToken()
-    .then(function (token) {
+  var wantLoc = !exampleKey && locCheck.checked && !locCheck.disabled;
+  locSent = null;
+  Promise.all([getTurnstileToken(), exampleKey ? null : devicePosition()])
+    .then(function (both) {
+      var token = both[0], pos = both[1];
       if (gen !== photoGen) throw { name: "AbortError", stale: true };
       if (ctrl) clientTimer = setTimeout(function () { ctrl.abort(); }, 40000);
-      /* The photo's own facts go with it: date, size, camera, and GPS if the camera wrote one (rounded server-side). See the Disclaimer. */
+      /* The photo's own facts go with it: date, size, camera, and a location if the camera wrote one or the
+         visitor ticked "Add my location" (rounded server-side to about 1 km). See the Disclaimer. */
       var payload = { image: b64, mediaType: mime, turnstile: token, w: sentW, h: sentH, tzOffsetMin: -new Date().getTimezoneOffset() };
       if (photoAt) { payload.taken = photoAt.toISOString(); payload.takenSource = photoSrc; }
       if (exampleKey) payload.example = exampleKey;
       if (exifInfo) {
-        if (typeof exifInfo.lat === "number") { payload.lat = exifInfo.lat; payload.lon = exifInfo.lon; if (typeof exifInfo.altitude === "number") payload.altitudeM = exifInfo.altitude; }
+        if (typeof exifInfo.lat === "number") { payload.lat = exifInfo.lat; payload.lon = exifInfo.lon; payload.locSource = "exif"; if (typeof exifInfo.altitude === "number") payload.altitudeM = exifInfo.altitude; locSent = "exif"; }
         if (exifInfo.make) payload.cameraMake = exifInfo.make; if (exifInfo.model) payload.cameraModel = exifInfo.model;
+      }
+      if (!payload.lat && wantLoc) {
+        if (pos && typeof pos.latitude === "number") {
+          payload.lat = pos.latitude; payload.lon = pos.longitude; payload.locSource = "device";
+          if (typeof pos.accuracy === "number") payload.locAccuracyM = pos.accuracy;
+          if (typeof pos.altitude === "number" && isFinite(pos.altitude)) payload.altitudeM = pos.altitude;
+          locSent = "device";
+        } else {
+          locSent = "failed";
+        }
       }
       return fetch(WORKER_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload), signal: ctrl ? ctrl.signal : undefined });
     })
@@ -466,7 +430,7 @@ go.addEventListener("click", function () {
         return;
       }
       lastTypes = d.types || []; lastConf = d.confidence || {}; lastReasoning = d.reasoning || null; lastFeature = d.feature || null; resultAt = new Date();
-      lastId = (!exampleKey && typeof d.id === "string" && /^[0-9a-f-]{36}$/.test(d.id)) ? d.id : null; locDone = false; lastFlagged = false; flaggedTypes = {}; flagBusy = {}; labelSent = null;
+      lastId = (!exampleKey && typeof d.id === "string" && /^[0-9a-f-]{36}$/.test(d.id)) ? d.id : null; lastFlagged = false; flaggedTypes = {}; flagBusy = {};
       render();
     })
     .catch(function (err) {
