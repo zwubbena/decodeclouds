@@ -158,11 +158,11 @@ function archiveHtml() {
     '<p class="archive-id"><b>Thanks for contributing to science.</b> This photo is now in the open DecodeClouds archive' +
     (hasExifLoc ? ", with the location your camera recorded, rounded to about 1&nbsp;km" : "") +
     ' (#' + esc(lastId.slice(0, 8)) + ").</p>" +
-    (lastFlagged ? flagLineHtml() : "") +
     (hasExifLoc ? "" :
       '<div class="loc-line" id="loc-line"><button class="pill white" id="loc-btn" type="button">Use my location</button>' +
       '<span class="hint">Where it was taken makes it more useful, rounded to about 1&nbsp;km. Only if you’re still there.</span>' +
       '<label class="check"><input type="checkbox" id="loc-exact"> Keep the exact spot</label></div>') +
+    (lastFlagged ? flagLineHtml() : "") +
     '<p class="archive-status" id="archive-status" hidden></p></section>';
 }
 function fmtLoc(lat, lon, exact) {
