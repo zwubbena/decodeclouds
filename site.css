@@ -158,6 +158,10 @@ footer .bar a { font-size: 13px; font-weight: 800; letter-spacing: .12em; text-t
 .archive .archive-id b { color: var(--ink); font-weight: 800; }
 .archive .archive-id a { color: var(--head); }
 .archive .loc-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 12px; }
+.archive .flag-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; font-size: 14px; color: var(--ink); }
+.archive .flag-line select { font: inherit; font-size: 13px; color: var(--ink); padding: 5px 8px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--card); }
+.archive .flag-line .pill { min-height: 36px; padding: 0 14px; font-size: 14px; }
+.archive .flag-line b { font-weight: 800; }
 .archive .hint { font-size: 13px; color: var(--muted); }
 .archive .check { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink); cursor: pointer; }
 .archive .check input { width: 17px; height: 17px; accent-color: var(--go); }

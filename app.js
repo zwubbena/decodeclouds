@@ -147,6 +147,9 @@ function archiveHtml() {
     '<p class="archive-id"><b>Thanks for contributing to science.</b> This photo is now in the open DecodeClouds archive' +
     (hasExifLoc ? ", with the location your camera recorded, rounded to about 1&nbsp;km" : "") +
     ' (#' + esc(lastId.slice(0, 8)) + ").</p>" +
+    '<div class="flag-line" id="flag-line"><span>Flag? What is it:</span> <select id="flag-select" aria-label="What is it">' +
+    ["Unknown", "Clear sky", "Cirrus", "Cirrocumulus", "Cirrostratus", "Altocumulus", "Altostratus", "Nimbostratus", "Stratus", "Stratocumulus", "Cumulus", "Towering Cumulus", "Cumulonimbus"].map(function (n) { return '<option value="' + esc(n) + '">' + esc(n) + "</option>"; }).join("") +
+    '</select> <button class="pill white" id="flag-btn" type="button">Send</button></div>' +
     (hasExifLoc ? "" :
       '<div class="loc-line" id="loc-line"><button class="pill white" id="loc-btn" type="button">Use my location</button>' +
       '<span class="hint">Where it was taken makes it more useful, rounded to about 1&nbsp;km. Only if you’re still there.</span>' +
@@ -159,6 +162,22 @@ function fmtLoc(lat, lon, exact) {
 }
 function wireArchive() {
   var b = $("loc-btn"); if (b) b.addEventListener("click", askLocation);
+  var f = $("flag-btn"); if (f) f.addEventListener("click", sendFlag);
+}
+/* "Flag? What is it": the visitor's own answer, saved beside the model's. */
+function sendFlag() {
+  var btn = $("flag-btn"), sel = $("flag-select"), id = lastId, gen = photoGen;
+  if (!id || !sel) return;
+  btn.disabled = true; btn.textContent = "Sending…";
+  getTurnstileToken()
+    .then(function (token) { return fetch(ARCHIVE_URL + "/flag", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: id, label: sel.value, turnstile: token }) }); })
+    .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, data: j }; }, function () { return { ok: r.ok, data: {} }; }); })
+    .then(function (res) {
+      if (gen !== photoGen) return;
+      if (!res.ok || !res.data || !res.data.ok) { btn.disabled = false; btn.textContent = "Send"; archiveStatus((res.data && res.data.message) || "Couldn’t save that. Please try again.", "err"); return; }
+      var line = $("flag-line"); if (line) line.innerHTML = "<span>Thanks, noted: <b>" + esc(sel.value) + "</b>.</span>";
+    })
+    .catch(function () { if (gen !== photoGen) return; btn.disabled = false; btn.textContent = "Send"; archiveStatus("Couldn’t connect. Check your signal and try again.", "err"); });
 }
 function archiveStatus(text, cls) { var st = $("archive-status"); if (!st) return; st.textContent = text; st.className = "archive-status " + (cls || ""); st.hidden = false; }
 function askLocation() {
