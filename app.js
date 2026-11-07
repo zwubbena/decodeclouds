@@ -347,6 +347,11 @@ go.addEventListener("click", function () {
       go.disabled = false; go.textContent = "Identify clouds";
       if (!res || !res.ok) { result.innerHTML = '<p class="err">' + esc((res && res.data && res.data.message) || "Couldn’t read that one. Try another photo.") + "</p>"; return; }
       var d = res.data || {};
+      if (d.notSky) {
+        lastTypes = null; lastId = null; highlight([]);
+        result.innerHTML = '<div class="cards"><article class="card"><div class="row"><p class="eyebrow">Not a sky photo</p></div><h3>Try a wide shot of the sky</h3><p>' + esc(d.message || "That doesn’t look like a photo of the sky.") + "</p></article></div>";
+        return;
+      }
       lastTypes = d.types || []; lastConf = d.confidence || {}; lastReasoning = d.reasoning || null; lastFeature = d.feature || null; resultAt = new Date();
       lastId = (typeof d.id === "string" && /^[0-9a-f-]{36}$/.test(d.id)) ? d.id : null; locDone = false;
       render();
