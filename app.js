@@ -28,7 +28,17 @@ function getTurnstileToken() {
           tsWidget = window.turnstile.render("#ts", {
             sitekey: TURNSTILE_SITEKEY, execution: "execute", appearance: "interaction-only",
             callback: function (t) { if (tsWaiter) tsWaiter(t); },
-            "error-callback": function () { if (tsWaiter) tsWaiter(""); }
+            "error-callback": function () { if (tsWaiter) tsWaiter(""); },
+            /* Cloudflare occasionally asks the visitor to tick a box. Bring it into view and say so,
+               because by now the page has scrolled down to the results block. */
+            "before-interactive-callback": function () {
+              var ts = $("ts"); ts.classList.add("needs-you"); ts.scrollIntoView({ behavior: "smooth", block: "center" });
+              if (!block.hidden) result.innerHTML = '<p class="loading">Please tick the box above to continue.</p>';
+            },
+            "after-interactive-callback": function () {
+              $("ts").classList.remove("needs-you");
+              if (!block.hidden) { result.innerHTML = '<p class="loading">Reading the sky&hellip; usually 5 to 15 seconds.</p>'; block.scrollIntoView({ behavior: "smooth", block: "start" }); }
+            }
           });
         } else {
           window.turnstile.reset(tsWidget);
