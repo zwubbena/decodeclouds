@@ -132,7 +132,6 @@ footer .bar { background: var(--foot-2); }
 footer .bar .wrap { min-height: 60px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 footer .bar span { font-size: 14px; font-weight: 600; color: var(--band-sub); }
 footer .bar a { font-size: 13px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; text-decoration: none; }
-footer .bar span a.maker { font-size: 14px; font-weight: 700; letter-spacing: 0; text-transform: none; text-decoration: underline; color: var(--head); }
 
 #print { display: none; }
 @media print {
