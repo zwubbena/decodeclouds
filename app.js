@@ -702,7 +702,7 @@ function downloadPdf() {
     "<h2>Results</h2>" + (lastTypes.length ? lastTypes.map(function (t) { var i = INFO[t] || {}; return "<h3>" + esc(t) + (lastConf[t] ? " <small>(" + esc(lastConf[t]) + " confidence)</small>" : "") + "</h3><p>" + esc(i.text || "") + "</p>"; }).join("") : "<p>Clear sky, no cloud types identified.</p>") +
     (lastFeature && lastFeature.type ? "<h3>Special feature: " + esc(featureName(lastFeature)) + "</h3><p>" + esc(lastFeature.note || "") + "</p>" : "") +
     (reasoningRows().length ? "<h2>How this was identified</h2>" + reasoningRows().map(function (x) { return "<p><b>" + x[0] + ":</b> " + esc(x[1]) + "</p>"; }).join("") : "") +
-    '<p class="pr-meta">For educational purposes only. Cloud identification may be inaccurate or incomplete. Not for weather forecasting, aviation, or safety-critical decisions.</p>';
+    '<p class="pr-meta">For educational purposes only. Cloud identification may be inaccurate or incomplete.</p>';
   var slot = $("pr-photo");
   if (pvi.src) { var im = document.createElement("img"); im.src = pvi.src; im.alt = "Sky photo"; slot.replaceWith(im); } else { slot.remove(); }
   window.print();
