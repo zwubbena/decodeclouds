@@ -586,7 +586,7 @@ function namesText(short) { return lastTypes.length ? lastTypes.map(function (t)
 function featureText() { return lastFeature && lastFeature.type ? "\nSpecial feature: " + featureName(lastFeature) + (lastFeature.confidence ? " (" + lastFeature.confidence + ")" : "") + (lastFeature.note ? "\n" + lastFeature.note : "") : ""; }
 function summaryText() {
   var rows = reasoningRows();
-  return subjectLine() + "\n\n" + stampLines().text + "\nResult: " + namesText(false) + featureText() +
+  return subjectLine() + "\n\n" + stampLines().text + "\nResults: " + namesText(false) + featureText() +
     (rows.length ? "\n\nHow this was identified:\n" + rows.map(function (x) { return "- " + x[0] + ": " + x[1]; }).join("\n") : "") + "\n\ndecodeclouds.com · Educational only.";
 }
 function textMessageBody() { return subjectLine() + "\n" + namesText(true) + (lastFeature && lastFeature.type ? "\nSpecial feature: " + featureName(lastFeature) : "") + "\n" + stampLines().text.split("\n")[0] + "\ndecodeclouds.com"; }
@@ -612,7 +612,7 @@ function downloadPdf() {
   $("print").innerHTML = "<p><b>DecodeClouds</b> · decodeclouds.com</p>" +
     '<p class="pr-meta">' + esc(st.text).replace("\n", "<br>") + "</p>" +
     '<span id="pr-photo"></span>' +
-    "<h2>Result</h2>" + (lastTypes.length ? lastTypes.map(function (t) { var i = INFO[t] || {}; return "<h3>" + esc(t) + (lastConf[t] ? " <small>(" + esc(lastConf[t]) + " confidence)</small>" : "") + "</h3><p>" + esc(i.text || "") + "</p>"; }).join("") : "<p>Clear sky, no cloud types identified.</p>") +
+    "<h2>Results</h2>" + (lastTypes.length ? lastTypes.map(function (t) { var i = INFO[t] || {}; return "<h3>" + esc(t) + (lastConf[t] ? " <small>(" + esc(lastConf[t]) + " confidence)</small>" : "") + "</h3><p>" + esc(i.text || "") + "</p>"; }).join("") : "<p>Clear sky, no cloud types identified.</p>") +
     (lastFeature && lastFeature.type ? "<h3>Special feature: " + esc(featureName(lastFeature)) + "</h3><p>" + esc(lastFeature.note || "") + "</p>" : "") +
     (reasoningRows().length ? "<h2>How this was identified</h2>" + reasoningRows().map(function (x) { return "<p><b>" + x[0] + ":</b> " + esc(x[1]) + "</p>"; }).join("") : "") +
     '<p class="pr-meta">For educational purposes only. Cloud identification may be inaccurate or incomplete. Not for weather forecasting, aviation, or safety-critical decisions.</p>';
