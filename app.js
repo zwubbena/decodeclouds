@@ -98,7 +98,7 @@ function confWithFlag(c, type) {
   if (!lastId) return conf;
   var on = !!flaggedTypes[type];
   return '<span class="conf-wrap">' + conf + '<button class="flag-btn' + (on ? " flagged" : "") + '" type="button" data-type="' + esc(type) + '" aria-pressed="' + (on ? "true" : "false") +
-    '" aria-label="Report misidentification" data-tip="' + (on ? "Flagged for review" : "Report misidentification") + '">' + FLAG_SVG + "</button></span>";
+    '" aria-label="Report misidentification" data-tip="' + (on ? TIP_ON : TIP_OFF) + '">' + FLAG_SVG + "</button></span>";
 }
 function featureName(fe) { return FEATURE[fe.type] || String(fe.type).replace(/_/g, " "); }
 function highlight(types, isResult) {
@@ -187,32 +187,35 @@ function postFlag(payload) {
     .then(function (token) { payload.turnstile = token; return fetch(ARCHIVE_URL + "/flag", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) }); })
     .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, data: j }; }, function () { return { ok: r.ok, data: {} }; }); });
 }
-/* A flag icon: one click reports that result as a misidentification. The icon fills at once; the
-   archive records the flag and which result it was on. */
+/* A flag icon: one click reports that result as a misidentification; clicking the filled flag
+   takes it back. The icon changes at once; the archive records which results are flagged. */
+var TIP_OFF = "Report misidentification", TIP_ON = "Flagged. Click to undo";
+function setFlag(btn, on) { btn.classList.toggle("flagged", on); btn.setAttribute("aria-pressed", on ? "true" : "false"); }
 function flagResult(e) {
   var btn = e.currentTarget, type = btn.getAttribute("data-type"), id = lastId, gen = photoGen;
-  if (!id || !type || flaggedTypes[type] || flagBusy[type]) return;
+  if (!id || !type || flagBusy[type]) return;
+  var undo = !!flaggedTypes[type];
   flagBusy[type] = true;
-  btn.classList.add("flagged"); btn.setAttribute("aria-pressed", "true"); showTip(btn, "Thanks! Flagged for review");
-  postFlag({ id: id, disputed: type })
+  setFlag(btn, !undo); showTip(btn, undo ? "Flag removed" : "Thanks! Flagged for review");
+  postFlag(undo ? { id: id, disputed: type, undo: true } : { id: id, disputed: type })
     .then(function (res) {
       if (gen !== photoGen) return;
       flagBusy[type] = false;
-      if (!res.ok || !res.data || !res.data.ok) {
-        btn.classList.remove("flagged"); btn.setAttribute("aria-pressed", "false"); showTip(btn, (res.data && res.data.message) || "Couldn’t save that. Try again.", true);
-        return;
-      }
-      flaggedTypes[type] = true; lastFlagged = true;
-      var arc = $("archive"); if (arc && !$("flag-line")) { var st = $("archive-status"); st.insertAdjacentHTML("beforebegin", flagLineHtml()); wireArchive(); }
+      if (!res.ok || !res.data || !res.data.ok) { setFlag(btn, undo); showTip(btn, (res.data && res.data.message) || "Couldn’t save that. Try again.", true); return; }
+      flaggedTypes[type] = !undo;
+      lastFlagged = Object.keys(flaggedTypes).some(function (k) { return flaggedTypes[k]; });
+      var line = $("flag-line");
+      if (lastFlagged && !line && $("archive")) { $("archive-status").insertAdjacentHTML("beforebegin", flagLineHtml()); wireArchive(); }
+      if (!lastFlagged && line && !labelSent) line.remove();
     })
-    .catch(function () { if (gen !== photoGen) return; flagBusy[type] = false; btn.classList.remove("flagged"); btn.setAttribute("aria-pressed", "false"); showTip(btn, "Couldn’t connect. Try again.", true); });
+    .catch(function () { if (gen !== photoGen) return; flagBusy[type] = false; setFlag(btn, undo); showTip(btn, "Couldn’t connect. Try again.", true); });
 }
 function showTip(btn, text, isError) {
   btn.setAttribute("data-tip", text); btn.classList.add("show-tip"); btn.classList.toggle("tip-err", !!isError);
   clearTimeout(btn._tipTimer);
   btn._tipTimer = setTimeout(function () {
     btn.classList.remove("show-tip", "tip-err");
-    btn.setAttribute("data-tip", btn.classList.contains("flagged") ? "Flagged for review" : "Report misidentification");
+    btn.setAttribute("data-tip", btn.classList.contains("flagged") ? TIP_ON : TIP_OFF);
   }, 2600);
 }
 /* "What was it?": the visitor's own answer, saved beside the model's. */

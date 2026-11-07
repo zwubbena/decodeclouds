@@ -80,7 +80,7 @@ section.block h2 { margin: 0; font-family: var(--display); font-variation-settin
 .flag-btn { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 999px; background: transparent; color: #C62828; cursor: pointer; transition: color .15s, background .15s; }
 .flag-btn:hover, .flag-btn:focus-visible { color: #B3261E; background: #FBEAE8; }
 .flag-btn:focus-visible { outline: 2px solid #B3261E; outline-offset: 2px; }
-.flag-btn.flagged { color: #B3261E; cursor: default; }
+.flag-btn.flagged { color: #B3261E; }
 .flag-btn.flagged .flag-fill { fill: currentColor; }
 .flag-btn::after { content: attr(data-tip); position: absolute; right: 0; bottom: calc(100% + 6px); white-space: nowrap; padding: 5px 9px; border-radius: 8px; background: var(--ink); color: #fff; font-family: var(--body); font-size: 12px; font-weight: 700; line-height: 1.3; pointer-events: none; opacity: 0; transform: translateY(2px); transition: opacity .15s, transform .15s; }
 .flag-btn:hover::after, .flag-btn:focus-visible::after, .flag-btn.show-tip::after { opacity: 1; transform: none; }
