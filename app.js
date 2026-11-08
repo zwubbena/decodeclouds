@@ -153,7 +153,7 @@ function archiveHtml() {
   }
   if (!lastId) return "";
   return '<section class="archive" id="archive">' +
-    '<p class="archive-id"><b>Thanks for contributing to science.</b> This photo is now in the open DecodeClouds archive' +
+    '<p class="archive-id"><b>Thanks for contributing!</b> This photo is now in the DecodeClouds archive' +
     (locSent === "exif" ? ", with the location your camera recorded, rounded to about 1&nbsp;km" :
      locSent === "device" ? ", with your location, rounded to about 1&nbsp;km" :
      locSent === "failed" ? " (your location wasn’t available, so it went in without one)" : "") +
