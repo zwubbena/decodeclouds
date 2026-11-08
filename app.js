@@ -57,7 +57,7 @@ var $ = function (id) { return document.getElementById(id); };
 })();
 document.querySelector("form.tool").addEventListener("submit", function (e) { e.preventDefault(); });
 var pick = $("pick"), drop = $("drop"), go = $("go"), result = $("result"), block = $("result-block"), pv = $("preview"), pvi = $("preview-img");
-var b64 = null, mime = null, fname = "", currentFile = null, lastTypes = null, lastConf = {}, lastFeature = null, lastReasoning = null, resultAt = null, photoAt = null;
+var b64 = null, mime = null, fname = "", currentFile = null, origSha256 = null, lastTypes = null, lastConf = {}, lastFeature = null, lastReasoning = null, resultAt = null, photoAt = null;
 /* Where photoAt came from ("exif" = camera date, "file" = file date) and the size of the copy that is analyzed. */
 var photoSrc = null, sentW = null, sentH = null;
 /* Archive: every identified photo is kept (said on the page). lastId is its archive id; exifInfo is what the camera recorded. */
@@ -222,10 +222,11 @@ function shrink(dataUrl, maxEdge, cb) {
   img.onload = function () {
     try {
       var w = img.naturalWidth, h = img.naturalHeight, L = Math.max(w, h);
-      if (!w || L <= maxEdge) return fin(dataUrl, mime, w, h);
-      var s = maxEdge / L, c = document.createElement("canvas");
+      if (!w) return fin(dataUrl, mime, w, h);
+      /* Always redrawn, even when no resize is needed: the copy that leaves the device carries no EXIF. */
+      var s = Math.min(1, maxEdge / L), c = document.createElement("canvas");
       c.width = Math.round(w * s); c.height = Math.round(h * s);
-      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      var g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
       fin(c.toDataURL("image/jpeg", 0.85), "image/jpeg", c.width, c.height);
     } catch (e) { fin(dataUrl, mime); }
   };
@@ -313,7 +314,13 @@ function loadFile(f, example) {
   var gen = ++photoGen; if (inFlight) { inFlight.abort(); inFlight = null; }
   exampleKey = example || null;
   go.textContent = "Identify clouds"; go.disabled = true;
-  fname = f.name; mime = f.type || "image/jpeg"; currentFile = f;
+  fname = f.name; mime = f.type || "image/jpeg"; currentFile = f; origSha256 = null;
+  /* Fingerprint of the original bytes (the worker uses it to recognise the site's own example photos). */
+  if (window.crypto && crypto.subtle && f.arrayBuffer) {
+    f.arrayBuffer().then(function (buf) { return crypto.subtle.digest("SHA-256", buf); })
+      .then(function (d) { if (gen !== photoGen) return; origSha256 = Array.prototype.map.call(new Uint8Array(d), function (b) { return ("0" + b.toString(16)).slice(-2); }).join(""); })
+      .catch(function () {});
+  }
   $("fname").textContent = (f.name === "image.jpg" ? "Photo ready" : f.name) + " · " + Math.round(f.size / 1024) + " KB";
   block.hidden = true; result.innerHTML = ""; lastTypes = null; highlight([]);
   lastId = null; exifInfo = {}; locSent = null; lastFlagged = false; flaggedTypes = {}; flagBusy = {};
@@ -355,7 +362,7 @@ function resetAll() {
   photoGen++; if (inFlight) { inFlight.abort(); inFlight = null; }
   currentFile = null; photoAt = null; photoSrc = null; sentW = null; sentH = null; go.textContent = "Identify clouds";
   lastId = null; exifInfo = {}; locSent = null; lastFlagged = false; flaggedTypes = {}; flagBusy = {}; exampleKey = null; $("example").value = "";
-  pick.value = ""; b64 = null; pv.hidden = true; pvi.src = ""; drop.hidden = false; go.disabled = true; $("reset-btn").disabled = true;
+  pick.value = ""; b64 = null; origSha256 = null; pv.hidden = true; pvi.src = ""; drop.hidden = false; go.disabled = true; $("reset-btn").disabled = true;
   block.hidden = true; result.innerHTML = ""; lastTypes = null; $("fname").textContent = ""; highlight([]);
   setLocOption();
 }
@@ -404,6 +411,7 @@ go.addEventListener("click", function () {
       var payload = { image: b64, mediaType: mime, turnstile: token, w: sentW, h: sentH, tzOffsetMin: -new Date().getTimezoneOffset() };
       if (photoAt) { payload.taken = photoAt.toISOString(); payload.takenSource = photoSrc; }
       if (exampleKey) payload.example = exampleKey;
+      if (origSha256) payload.origSha256 = origSha256;
       if (exifInfo) {
         if (typeof exifInfo.lat === "number") { payload.lat = exifInfo.lat; payload.lon = exifInfo.lon; payload.locSource = "exif"; if (typeof exifInfo.altitude === "number") payload.altitudeM = exifInfo.altitude; locSent = "exif"; }
         if (exifInfo.make) payload.cameraMake = exifInfo.make; if (exifInfo.model) payload.cameraModel = exifInfo.model;
