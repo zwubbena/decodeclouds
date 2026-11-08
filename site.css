@@ -32,6 +32,7 @@ button, label.btn { font-family: var(--body); cursor: pointer; }
 header.top { height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .contact { position: relative; top: 5px; display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 16px; border: 1.5px solid rgba(255,255,255,.6); border-radius: 999px; color: #fff; font-size: 15px; font-weight: 700; text-decoration: none; }
 .contact:hover { color: #fff; background: rgba(255,255,255,.12); border-color: #fff; }
+.top-links { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 .contact:focus-visible { outline-color: #fff; }
 .mark { font-family: var(--display); font-variation-settings: var(--wonk); font-size: clamp(24px, 3vw, 28px); font-weight: 300; color: #fff; text-decoration: none; letter-spacing: -.01em; }
 .mark:hover { color: #fff; } .mark b { font-weight: 600; }
