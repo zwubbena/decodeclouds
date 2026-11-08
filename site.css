@@ -88,7 +88,7 @@ section.block h2 { margin: 0; font-family: var(--display); font-variation-settin
 .flag-btn.flagged { color: #B3261E; }
 .flag-btn.flagged .flag-fill { fill: currentColor; }
 .flag-btn::after { content: attr(data-tip); position: absolute; right: 0; bottom: calc(100% + 6px); white-space: nowrap; padding: 5px 9px; border-radius: 8px; background: var(--ink); color: #fff; font-family: var(--body); font-size: 12px; font-weight: 700; line-height: 1.3; pointer-events: none; opacity: 0; transform: translateY(2px); transition: opacity .15s, transform .15s; }
-.flag-btn:hover::after, .flag-btn:focus-visible::after, .flag-btn.show-tip::after { opacity: 1; transform: none; }
+.flag-btn:not(.quiet):hover::after, .flag-btn:not(.quiet):focus-visible::after, .flag-btn.show-tip::after { opacity: 1; transform: none; }
 .flag-btn.tip-err::after { background: #B3261E; }
 .card.feature .flag-btn, .card.feature .flag-btn.flagged { color: #FFB4AB; } .card.feature .flag-btn:hover { background: rgba(255,255,255,.15); }
 .details { display: flex; flex-direction: column; gap: 6px; padding-top: 10px; margin-top: 2px; border-top: 1px solid var(--line); }

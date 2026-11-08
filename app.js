@@ -98,7 +98,7 @@ function confWithFlag(c, type) {
   if (!lastId) return conf;
   var on = !!flaggedTypes[type];
   return '<span class="conf-wrap">' + conf + '<button class="flag-btn' + (on ? " flagged" : "") + '" type="button" data-type="' + esc(type) + '" aria-pressed="' + (on ? "true" : "false") +
-    '" aria-label="Report misidentification" data-tip="' + (on ? TIP_ON : TIP_OFF) + '">' + FLAG_SVG + "</button></span>";
+    '" aria-label="Flag issue" data-tip="' + (on ? TIP_ON : TIP_OFF) + '">' + FLAG_SVG + "</button></span>";
 }
 function featureName(fe) { return FEATURE[fe.type] || String(fe.type).replace(/_/g, " "); }
 function highlight(types, isResult) {
@@ -140,7 +140,7 @@ function render() {
   $("pdf-btn").addEventListener("click", downloadPdf);
   $("email-btn").addEventListener("click", function () { shareReport("email"); });
   $("text-btn").addEventListener("click", function () { shareReport("text"); });
-  document.querySelectorAll(".flag-btn").forEach(function (b) { b.addEventListener("click", flagResult); });
+  document.querySelectorAll(".flag-btn").forEach(function (b) { b.addEventListener("click", flagResult); b.addEventListener("mouseleave", function () { b.classList.remove("quiet"); }); b.addEventListener("blur", function () { b.classList.remove("quiet"); }); });
   highlight(lastTypes, true);
 }
 
@@ -166,30 +166,31 @@ function postFlag(payload) {
 }
 /* A flag icon: one click reports that result as a misidentification; clicking the filled flag
    takes it back. The icon changes at once; the archive records which results are flagged. */
-var TIP_OFF = "Report misidentification", TIP_ON = "Flagged. Click to undo";
+var TIP_OFF = "Flag issue", TIP_ON = "Flagged";
 function setFlag(btn, on) { btn.classList.toggle("flagged", on); btn.setAttribute("aria-pressed", on ? "true" : "false"); }
 function flagResult(e) {
   var btn = e.currentTarget, type = btn.getAttribute("data-type"), id = lastId, gen = photoGen;
   if (!id || !type || flagBusy[type]) return;
   var undo = !!flaggedTypes[type];
   flagBusy[type] = true;
-  setFlag(btn, !undo); showTip(btn, undo ? "Flag removed" : "Thanks! Flagged for review");
+  setFlag(btn, !undo); showTip(btn, undo ? "Unflagged" : "Flagged");
   postFlag(undo ? { id: id, disputed: type, undo: true } : { id: id, disputed: type })
     .then(function (res) {
       if (gen !== photoGen) return;
       flagBusy[type] = false;
-      if (!res.ok || !res.data || !res.data.ok) { setFlag(btn, undo); showTip(btn, (res.data && res.data.message) || "Couldn’t save that. Try again.", true); return; }
+      if (!res.ok || !res.data || !res.data.ok) { setFlag(btn, undo); showTip(btn, "Couldn’t save. Try again.", true); return; }
       flaggedTypes[type] = !undo;
     })
     .catch(function () { if (gen !== photoGen) return; flagBusy[type] = false; setFlag(btn, undo); showTip(btn, "Couldn’t connect. Try again.", true); });
 }
+/* A short confirmation, then nothing: the hover label stays hidden until the pointer leaves the flag. */
 function showTip(btn, text, isError) {
-  btn.setAttribute("data-tip", text); btn.classList.add("show-tip"); btn.classList.toggle("tip-err", !!isError);
+  btn.setAttribute("data-tip", text); btn.classList.add("show-tip", "quiet"); btn.classList.toggle("tip-err", !!isError);
   clearTimeout(btn._tipTimer);
   btn._tipTimer = setTimeout(function () {
     btn.classList.remove("show-tip", "tip-err");
     btn.setAttribute("data-tip", btn.classList.contains("flagged") ? TIP_ON : TIP_OFF);
-  }, 2600);
+  }, isError ? 2200 : 1200);
 }
 
 /* ---- "Add my location" (upload card): asked for when Identify clouds is clicked, sent with the photo. ---- */
