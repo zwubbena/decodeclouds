@@ -32,7 +32,6 @@ button, label.btn { font-family: var(--body); cursor: pointer; }
 header.top { height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .contact { position: relative; top: 5px; display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 16px; border: 1.5px solid rgba(255,255,255,.6); border-radius: 999px; color: #fff; font-size: 15px; font-weight: 700; text-decoration: none; }
 .contact:hover { color: #fff; background: rgba(255,255,255,.12); border-color: #fff; }
-.top-links { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 .contact:focus-visible { outline-color: #fff; }
 .mark { font-family: var(--display); font-variation-settings: var(--wonk); font-size: clamp(24px, 3vw, 28px); font-weight: 300; color: #fff; text-decoration: none; letter-spacing: -.01em; }
 .mark:hover { color: #fff; } .mark b { font-weight: 600; }
@@ -139,6 +138,8 @@ details.how ul { margin: 0; padding: 0 18px 16px 46px; font-size: 14px; line-hei
 .note-band { display: block; flex: 0 0 auto; background: var(--tier-low); border-top: 1px solid var(--tier-line); padding: 16px clamp(18px, 2vw, 24px); }
 .note { margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted); }
 .note b { color: var(--ink); font-weight: 800; }
+.note a { color: var(--head); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.note a:hover { color: var(--ink); }
 
 footer { margin: clamp(44px, 6vw, 72px) 0 0; background: var(--foot); color: var(--ink-2); }
 footer .cols { padding: clamp(36px, 5vw, 52px) clamp(16px, 4vw, 48px); display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 48px; }
