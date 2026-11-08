@@ -438,7 +438,12 @@ go.addEventListener("click", function () {
       inFlight = null;
       if (!res || !res.ok) { unlockIdentify(); result.innerHTML = '<p class="err">' + esc((res && res.data && res.data.message) || "Couldn’t read that one. Try another photo.") + "</p>"; return; }
       var d = res.data || {};
-      go.disabled = true; go.textContent = d.notSky ? "Done" : "Identified";
+      go.disabled = true; go.textContent = d.notSky || d.rejected ? "Done" : "Identified";
+      if (d.rejected) {
+        lastTypes = null; lastId = null; highlight([]);
+        result.innerHTML = '<div class="cards"><article class="card"><div class="row"><p class="eyebrow">Photo not accepted</p></div><h3>Please choose a photo of the sky</h3><p>' + esc(d.message || "That photo can’t be used here.") + "</p></article></div>";
+        return;
+      }
       if (d.notSky) {
         lastTypes = null; lastId = null; highlight([]);
         result.innerHTML = '<div class="cards"><article class="card"><div class="row"><p class="eyebrow">Not a sky photo</p></div><h3>Try a wide shot of the sky</h3><p>' + esc(d.message || "That doesn’t look like a photo of the sky.") + "</p></article></div>";
