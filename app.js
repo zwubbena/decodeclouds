@@ -194,12 +194,15 @@ function showTip(btn, text, isError) {
 
 /* ---- "Add my location" (upload card): asked for when Identify clouds is clicked, sent with the photo. ---- */
 var locCheck = $("loc-check"), locOpt = $("loc-opt"), locText = $("loc-text");
+/* locWanted is the visitor's own tick; a camera location forces the box on without changing it. */
+var locWanted = false;
+locCheck.addEventListener("change", function () { if (!locCheck.disabled) locWanted = locCheck.checked; });
 function setLocOption() {
   var hasExif = !exampleKey && exifInfo && typeof exifInfo.lat === "number";
   locOpt.hidden = !!exampleKey;
   locCheck.disabled = hasExif;
   locText.textContent = hasExif ? "Location found in the photo" : "Add my location";
-  if (hasExif) locCheck.checked = true;
+  locCheck.checked = hasExif || locWanted;
 }
 /* After an error the same photo may be tried again. */
 function unlockIdentify() { go.disabled = false; go.textContent = "Identify clouds"; setLocOption(); }
@@ -362,7 +365,7 @@ function resetAll() {
   photoGen++; if (inFlight) { inFlight.abort(); inFlight = null; }
   currentFile = null; photoAt = null; photoSrc = null; sentW = null; sentH = null; go.textContent = "Identify clouds";
   lastId = null; exifInfo = {}; locSent = null; lastFlagged = false; flaggedTypes = {}; flagBusy = {}; exampleKey = null; $("example").value = "";
-  pick.value = ""; b64 = null; origSha256 = null; pv.hidden = true; pvi.src = ""; drop.hidden = false; go.disabled = true; $("reset-btn").disabled = true;
+  pick.value = ""; b64 = null; origSha256 = null; locWanted = false; pv.hidden = true; pvi.src = ""; drop.hidden = false; go.disabled = true; $("reset-btn").disabled = true;
   block.hidden = true; result.innerHTML = ""; lastTypes = null; $("fname").textContent = ""; highlight([]);
   setLocOption();
 }
