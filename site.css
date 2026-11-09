@@ -169,8 +169,6 @@ footer .bar a { font-size: 13px; font-weight: 800; letter-spacing: .12em; text-t
 .example-row select { font: inherit; font-size: 13px; color: var(--ink); padding: 5px 8px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--card); max-width: 60%; }
 
 /* Archive line under a result, and the note in the upload card */
-.archive-note { margin: 10px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--muted); }
-.archive-note a { color: var(--head); }
 .archive { margin-top: 18px; padding: 14px 18px 16px; border: 1px solid var(--tier-line); border-radius: 14px; background: var(--card); }
 .archive p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted); }
 .archive .archive-id b { color: var(--ink); font-weight: 800; }
