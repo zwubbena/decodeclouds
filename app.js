@@ -3,49 +3,91 @@
 var WORKER_URL = "https://decode-clouds.zwubbena.workers.dev/classify";
 /* Cloudflare Turnstile bot check. The site key is public. Empty = check off. */
 var TURNSTILE_SITEKEY = "0x4AAAAAAF1xtuj8d40wVGTB";
-var tsWidget = null, tsWaiter = null, tsReady = Promise.resolve();
-if (TURNSTILE_SITEKEY) {
-  tsReady = new Promise(function (res) {
-    var sc = document.createElement("script");
-    sc.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
-    sc.async = true; sc.onload = res; sc.onerror = res;
-    document.head.appendChild(sc);
-  });
-}
-/* Resolves with a fresh single-use token ("" if the check is off or can't run). */
-function getTurnstileToken() {
-  if (!TURNSTILE_SITEKEY) return Promise.resolve("");
-  return tsReady.then(function () {
-    return new Promise(function (resolve) {
-      var done = false;
-      function finish(t) { if (!done) { done = true; tsWaiter = null; resolve(t || ""); } }
-      tsWaiter = finish;
-      /* Usually instant. If Cloudflare shows a checkbox instead, give the visitor time to click it. */
-      setTimeout(function () { finish(""); }, 60000);
-      if (!window.turnstile) return finish("");
-      try {
-        if (tsWidget === null) {
-          tsWidget = window.turnstile.render("#ts", {
-            sitekey: TURNSTILE_SITEKEY, execution: "execute", appearance: "interaction-only",
-            callback: function (t) { if (tsWaiter) tsWaiter(t); },
-            "error-callback": function () { if (tsWaiter) tsWaiter(""); },
-            /* Cloudflare occasionally asks the visitor to tick a box. Bring it into view and say so,
-               because by now the page has scrolled down to the results block. */
-            "before-interactive-callback": function () {
-              var ts = $("ts"); ts.classList.add("needs-you"); ts.scrollIntoView({ behavior: "smooth", block: "center" });
-              if (!block.hidden) result.innerHTML = '<p class="loading">Please tick the box above to continue.</p>';
-            },
-            "after-interactive-callback": function () {
-              $("ts").classList.remove("needs-you");
-              if (!block.hidden) { result.innerHTML = '<p class="loading">Reading the sky&hellip; usually 5 to 15 seconds.</p>'; block.scrollIntoView({ behavior: "smooth", block: "start" }); }
-            }
-          });
-        } else {
-          window.turnstile.reset(tsWidget);
-        }
-        window.turnstile.execute(tsWidget);
-      } catch (e) { finish(""); }
+var tsWidget = null, tsWaiter = null, tsLoading = null, tsQueue = Promise.resolve(), tsStop = null;
+/* Why the last bot check gave no token: a Cloudflare error code, or "script" (Cloudflare's script
+   did not load), "timeout", "interaction" (a box was shown and not ticked in time), "unsupported",
+   "exception" or "cancelled". The error message shows it, so a screenshot says what happened. */
+var tsFail = "";
+/* Loads Cloudflare's script. Resolves true once window.turnstile exists. A load that failed (a phone
+   with no signal when the page opened) is tried again the next time this is called. */
+function loadTurnstile() {
+  if (window.turnstile) return Promise.resolve(true);
+  if (!tsLoading) {
+    tsLoading = new Promise(function (res) {
+      var sc = document.createElement("script");
+      sc.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      sc.async = true;
+      sc.onload = function () { if (!window.turnstile) tsLoading = null; res(!!window.turnstile); };
+      sc.onerror = function () { tsLoading = null; if (sc.parentNode) sc.parentNode.removeChild(sc); res(false); };
+      document.head.appendChild(sc);
     });
+  }
+  return tsLoading;
+}
+if (TURNSTILE_SITEKEY) loadTurnstile();
+var TS_OPTIONS = {
+  sitekey: TURNSTILE_SITEKEY, execution: "execute", appearance: "interaction-only",
+  /* tsOnce below runs the retries itself, so they stop when the page gives up. A token is asked for
+     only when one is needed, so an idle page does not keep refreshing tokens on its own. */
+  retry: "never", "refresh-expired": "never",
+  callback: function (t) { if (tsWaiter) tsWaiter.token(t); },
+  "error-callback": function (code) { if (tsWaiter) tsWaiter.error(code); return true; },
+  "timeout-callback": function () { if (tsWaiter) tsWaiter.stop("interaction"); },
+  "unsupported-callback": function () { if (tsWaiter) tsWaiter.stop("unsupported"); },
+  /* Cloudflare occasionally asks the visitor to tick a box. Bring it into view and say so,
+     because by now the page has scrolled down to the results block. */
+  "before-interactive-callback": function () {
+    var ts = $("ts"); ts.classList.add("needs-you"); ts.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (tsWaiter) tsWaiter.box(true);
+  },
+  "after-interactive-callback": function () {
+    $("ts").classList.remove("needs-you");
+    if (tsWaiter) tsWaiter.box(false);
+  }
+};
+/* Resolves with a fresh single-use token, or "" when the check is off or could not be completed
+   (tsFail then says why). Requests run one at a time. onBox(showing), when given, is told when
+   Cloudflare's tick box appears and goes away. */
+function getTurnstileToken(onBox) {
+  if (!TURNSTILE_SITEKEY) { tsFail = ""; return Promise.resolve(""); }
+  var p = tsQueue.then(function () { return tsOnce(onBox); });
+  tsQueue = p;
+  return p;
+}
+/* One token request. Cloudflare's check can fail once on a weak phone signal and pass a moment
+   later, so a failed check is run again: three tries in all, 1.5 s apart, 45 s at most. */
+function tsOnce(onBox) {
+  tsFail = "";
+  return new Promise(function (resolve) {
+    var done = false, errors = 0, timer = null;
+    function finish(token, why) {
+      if (done) return;
+      done = true; clearTimeout(timer); tsWaiter = null; tsStop = null;
+      if (!token) { tsFail = why; try { if (tsWidget !== null) window.turnstile.reset(tsWidget); } catch (e) {} }
+      resolve(token || "");
+    }
+    function wait(ms) { clearTimeout(timer); timer = setTimeout(function () { finish("", tsFail || "timeout"); }, ms); }
+    function run() {
+      try {
+        if (tsWidget === null) tsWidget = window.turnstile.render("#ts", TS_OPTIONS);
+        else window.turnstile.reset(tsWidget);
+        window.turnstile.execute(tsWidget);
+      } catch (e) { finish("", "exception"); }
+    }
+    tsWaiter = {
+      token: function (t) { finish(t, "empty"); },
+      error: function (code) {
+        tsFail = String(code || "error");
+        if (++errors < 3) setTimeout(function () { if (!done) run(); }, 1500);
+        else finish("", tsFail);
+      },
+      /* While the tick box is showing, wait as long as Cloudflare does (120 s) for the tick. */
+      box: function (showing) { if (showing) wait(125000); if (onBox) onBox(showing); },
+      stop: function (why) { finish("", why); }
+    };
+    tsStop = function () { finish("", "cancelled"); };
+    wait(45000);
+    loadTurnstile().then(function (ok) { if (done) return; if (ok) run(); else finish("", "script"); });
   });
 }
 var $ = function (id) { return document.getElementById(id); };
@@ -207,14 +249,18 @@ function setLocOption() {
 }
 /* After an error the same photo may be tried again. */
 function unlockIdentify() { go.disabled = false; go.textContent = "Identify clouds"; setLocOption(); }
-/* Resolves to the browser position or null; never rejects, never waits more than 8 s. */
+/* Resolves to the browser position or null; never rejects. The fix itself gets 8 s; the 25 s limit
+   also covers the time a visitor takes to answer the browser's permission question. The caller
+   decides whether a position is wanted. */
 function devicePosition() {
-  if (!locCheck.checked || locCheck.disabled || !navigator.geolocation) return Promise.resolve(null);
+  if (!navigator.geolocation) return Promise.resolve(null);
   return new Promise(function (resolve) {
     var done = false;
     function finish(p) { if (!done) { done = true; resolve(p); } }
-    navigator.geolocation.getCurrentPosition(function (pos) { finish(pos.coords); }, function () { finish(null); }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 120000 });
-    setTimeout(function () { finish(null); }, 9000);
+    try {
+      navigator.geolocation.getCurrentPosition(function (pos) { finish(pos.coords); }, function () { finish(null); }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 120000 });
+    } catch (e) { finish(null); }
+    setTimeout(function () { finish(null); }, 25000);
   });
 }
 
@@ -315,7 +361,7 @@ function exifDate(dataUrl) {
 var photoGen = 0, inFlight = null;
 function loadFile(f, example) {
   if (!f || !/^image\//.test(f.type || "image/jpeg")) return;
-  var gen = ++photoGen; if (inFlight) { inFlight.abort(); inFlight = null; }
+  var gen = ++photoGen; if (inFlight) { inFlight.abort(); inFlight = null; } if (tsStop) tsStop();
   exampleKey = example || null;
   go.textContent = "Identify clouds"; go.disabled = true;
   fname = f.name; mime = f.type || "image/jpeg"; currentFile = f; origSha256 = null;
@@ -363,7 +409,7 @@ $("example").addEventListener("change", function () {
 ["dragleave", "drop"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove("over"); }); });
 drop.addEventListener("drop", function (e) { loadFile(e.dataTransfer.files && e.dataTransfer.files[0]); });
 function resetAll() {
-  photoGen++; if (inFlight) { inFlight.abort(); inFlight = null; }
+  photoGen++; if (inFlight) { inFlight.abort(); inFlight = null; } if (tsStop) tsStop();
   currentFile = null; photoAt = null; photoSrc = null; sentW = null; sentH = null; go.textContent = "Identify clouds";
   lastId = null; exifInfo = {}; locSent = null; lastFlagged = false; flaggedTypes = {}; flagBusy = {}; exampleKey = null; $("example").value = "";
   pick.value = ""; b64 = null; origSha256 = null; locWanted = false; pv.hidden = true; pvi.src = ""; drop.hidden = false; go.disabled = true; $("reset-btn").disabled = true;
@@ -393,22 +439,38 @@ function savePhoto() {
 }
 $("save-btn").addEventListener("click", savePhoto);
 
+var LOADING_HTML = '<p class="loading">Reading the sky&hellip; usually 5 to 15 seconds.</p>';
+/* Identify clouds. The location comes first when it is wanted, so a phone's permission question is
+   answered before anything else starts; then the bot check; then the photo is sent. */
 go.addEventListener("click", function () {
   if (!b64) return;
+  var gen = photoGen;
+  /* Read the location option before the lock below disables the box. */
+  var wantLoc = !exampleKey && locCheck.checked && !(exifInfo && typeof exifInfo.lat === "number");
   /* The button and the location option belong to this analysis: both lock now and stay locked
      after a result (no re-runs of the same photo); a new photo, Reset or an error unlocks them. */
   go.disabled = true; go.textContent = "Identifying…"; locCheck.disabled = true; block.hidden = false;
   block.scrollIntoView({ behavior: "smooth", block: "start" });
-  result.innerHTML = '<p class="loading">Reading the sky&hellip; usually 5 to 15 seconds.</p>';
-  /* The worker gives up on the AI after 30 s and says so; this is a backstop if the network itself stalls. */
-  var ctrl = typeof AbortController === "function" ? new AbortController() : null, clientTimer = null, gen = photoGen;
-  inFlight = ctrl;
-  var wantLoc = !exampleKey && locCheck.checked && !locCheck.disabled;
   locSent = null;
-  Promise.all([getTurnstileToken(), exampleKey ? null : devicePosition()])
-    .then(function (both) {
-      var token = both[0], pos = both[1];
+  if (!wantLoc) { result.innerHTML = LOADING_HTML; identify(gen, false, null, 1); return; }
+  result.innerHTML = '<p class="loading">Finding your location&hellip;</p>';
+  devicePosition().then(function (pos) { if (gen !== photoGen) return; result.innerHTML = LOADING_HTML; identify(gen, true, pos, 1); });
+});
+/* The bot check, then the photo. If the connection drops as the photo is sent (a phone between
+   networks), the page tries once more by itself: tryNo 2, with a fresh token. */
+function identify(gen, wantLoc, pos, tryNo) {
+  /* The worker gives up on the AI after 30 s and says so; this is a backstop if the network itself stalls. */
+  var ctrl = typeof AbortController === "function" ? new AbortController() : null, clientTimer = null, sentAt = 0;
+  inFlight = ctrl;
+  getTurnstileToken(function (boxShowing) {
+    if (gen !== photoGen || block.hidden) return;
+    result.innerHTML = boxShowing ? '<p class="loading">Please tick the box above to continue.</p>' : LOADING_HTML;
+    if (!boxShowing) block.scrollIntoView({ behavior: "smooth", block: "start" });
+  })
+    .then(function (token) {
       if (gen !== photoGen) throw { name: "AbortError", stale: true };
+      /* No token means the worker would refuse the photo, so it is not sent. */
+      if (!token && TURNSTILE_SITEKEY) throw { name: "NoToken", why: tsFail };
       if (ctrl) clientTimer = setTimeout(function () { ctrl.abort(); }, 40000);
       /* The photo's own facts go with it: date, size, camera, and a location if the camera wrote one or the
          visitor ticked "Add my location" (rounded server-side to about 1 km). See the Disclaimer. */
@@ -430,7 +492,9 @@ go.addEventListener("click", function () {
           locSent = "failed";
         }
       }
-      return fetch(WORKER_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload), signal: ctrl ? ctrl.signal : undefined });
+      sentAt = Date.now();
+      return fetch(WORKER_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload), signal: ctrl ? ctrl.signal : undefined })
+        .catch(function (e) { throw { name: e && e.name === "AbortError" ? "AbortError" : "NetFail" }; });
     })
     .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, data: j }; }, function () { return { ok: r.ok, data: {} }; }); })
     .then(function (res) {
@@ -458,11 +522,23 @@ go.addEventListener("click", function () {
       clearTimeout(clientTimer);
       if (gen !== photoGen) return; /* the photo was changed or reset while this ran */
       inFlight = null;
+      var name = err && err.name;
+      /* A connection that drops at once usually works a moment later. One more try, not more:
+         after 5 s the photo may already be with the worker, and a second copy would be a duplicate. */
+      if (name === "NetFail" && tryNo === 1 && Date.now() - sentAt < 5000) {
+        result.innerHTML = '<p class="loading">Connection dropped. Trying again&hellip;</p>';
+        setTimeout(function () { if (gen === photoGen) identify(gen, wantLoc, pos, 2); }, 1500);
+        return;
+      }
       unlockIdentify();
-      var timedOut = err && err.name === "AbortError";
-      result.innerHTML = '<p class="err">' + (timedOut ? "Sorry it took too long. Do me a favor. Try again." : "Couldn’t connect. Check your signal and try again.") + "</p>";
+      var why = name === "NoToken" ? err.why : "";
+      result.innerHTML = '<p class="err">' + (
+        name === "AbortError" ? "Sorry it took too long. Do me a favor. Try again." :
+        why === "interaction" ? "The box wasn’t ticked in time. Try again." :
+        why && why !== "script" ? "Couldn’t confirm you’re a person. Reload the page and try again. (Code " + esc(why) + ")" :
+        "Couldn’t connect. Check your signal and try again.") + "</p>";
     });
-});
+}
 
 /* Real-photo examples for the reference list. Freely licensed photos from Wikimedia Commons,
    resized copies served from this site's /photos/ folder; each is credited in the pop-up. */
