@@ -498,7 +498,25 @@ function savePhoto() {
 }
 $("save-btn").addEventListener("click", savePhoto);
 
-var LOADING_HTML = '<p class="loading">Reading the sky&hellip; usually 5 to 15 seconds.</p>';
+/* ---- Progress while a photo is identified: four dots in a square beside the status line, one dot
+   per step. Step 1 is the visitor's location, step 2 the bot check, step 3 sending the photo, step 4
+   reading the sky. A filled dot is a finished step, the pulsing dot is the step that is running, an
+   outlined dot is a step still to come. The line names the running step; `words` stands in for that
+   name during a moment that belongs to the step (the tick box, a dropped connection). The dots say
+   which step is running, not how far along it is: the identification service reports no progress.
+   The box and its dots are built once and then updated in place, so the pulse does not restart and
+   a screen reader hears each new line (role="status"). ---- */
+var STEP_WORDS = ["Finding your location…", "Checking you’re a person…", "Sending the photo…", "Reading the sky… usually 5 to 15 seconds."];
+function showStep(n, words) {
+  var box = result.querySelector(".progress");
+  if (!box) {
+    result.innerHTML = '<div class="progress" role="status"><span class="steps" aria-hidden="true"><i></i><i></i><i></i><i></i></span><p class="loading"></p></div>';
+    box = result.querySelector(".progress");
+  }
+  var dots = box.querySelectorAll(".steps i");
+  for (var k = 0; k < dots.length; k++) dots[k].className = k < n - 1 ? "done" : k === n - 1 ? "now" : "";
+  box.querySelector(".loading").textContent = words || STEP_WORDS[n - 1];
+}
 /* Identify clouds. The location comes first when it is wanted, so a phone's permission question is
    answered before anything else starts; then the bot check; then the photo is sent. */
 go.addEventListener("click", function () {
@@ -511,19 +529,49 @@ go.addEventListener("click", function () {
   go.disabled = true; go.textContent = "Identifying…"; locCheck.disabled = true; block.hidden = false;
   block.scrollIntoView({ behavior: "smooth", block: "start" });
   locSent = null;
-  if (!wantLoc) { result.innerHTML = LOADING_HTML; identify(gen, false, null, 1); return; }
-  result.innerHTML = '<p class="loading">Finding your location&hellip;</p>';
-  devicePosition().then(function (pos) { if (gen !== photoGen) return; result.innerHTML = LOADING_HTML; identify(gen, true, pos, 1); });
+  /* With no location to ask for, step 1 is finished at once: identify() opens at step 2. */
+  if (!wantLoc) { identify(gen, false, null, 1); return; }
+  showStep(1);
+  devicePosition().then(function (pos) { if (gen !== photoGen) return; identify(gen, true, pos, 1); });
 });
+/* Sends the photo to the Worker and resolves to { ok, data }. XMLHttpRequest rather than fetch,
+   because only XMLHttpRequest says when the upload itself is finished: onSent runs once the browser
+   has handed the last byte of the photo to the network, which is where step 3 ends and step 4
+   begins. Rejects with { name: "AbortError" } when the request is stopped (Reset, a new photo, or the
+   40 s limit) and with { name: "NetFail" } when the connection fails. */
+function sendPhoto(payload, signal, onSent) {
+  var body = JSON.stringify(payload);
+  return new Promise(function (resolve, reject) {
+    var xhr = new XMLHttpRequest(), sent = false, over = false;
+    /* Nothing is reported once the request has ended: a late upload event must not touch a result. */
+    function markSent() { if (!sent && !over) { sent = true; onSent(); } }
+    xhr.upload.onload = markSent;
+    xhr.onload = function () {
+      over = true;
+      var data = {};
+      try { data = JSON.parse(xhr.responseText); } catch (e) {}
+      resolve({ ok: xhr.status >= 200 && xhr.status < 300, data: data });
+    };
+    xhr.onerror = function () { over = true; reject({ name: "NetFail" }); };
+    xhr.onabort = function () { over = true; reject({ name: "AbortError" }); };
+    if (signal) signal.addEventListener("abort", function () { if (!over) xhr.abort(); });
+    try {
+      xhr.open("POST", WORKER_URL);
+      xhr.setRequestHeader("content-type", "application/json");
+      xhr.send(body);
+    } catch (e) { over = true; reject({ name: "NetFail" }); }
+  });
+}
 /* The bot check, then the photo. If the connection drops as the photo is sent (a phone between
    networks), the page tries once more by itself: tryNo 2, with a fresh token. */
 function identify(gen, wantLoc, pos, tryNo) {
   /* The worker gives up on the AI after 30 s and says so; this is a backstop if the network itself stalls. */
   var ctrl = typeof AbortController === "function" ? new AbortController() : null, clientTimer = null, sentAt = 0;
   inFlight = ctrl;
+  showStep(2);
   getTurnstileToken(function (boxShowing) {
     if (gen !== photoGen || block.hidden) return;
-    result.innerHTML = boxShowing ? '<p class="loading">Please tick the box above to continue.</p>' : LOADING_HTML;
+    showStep(2, boxShowing ? "Please tick the box above to continue." : "");
     if (!boxShowing) block.scrollIntoView({ behavior: "smooth", block: "start" });
   })
     .then(function (token) {
@@ -552,10 +600,9 @@ function identify(gen, wantLoc, pos, tryNo) {
         }
       }
       sentAt = Date.now();
-      return fetch(WORKER_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload), signal: ctrl ? ctrl.signal : undefined })
-        .catch(function (e) { throw { name: e && e.name === "AbortError" ? "AbortError" : "NetFail" }; });
+      showStep(3);
+      return sendPhoto(payload, ctrl ? ctrl.signal : null, function () { if (gen === photoGen) showStep(4); });
     })
-    .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, data: j }; }, function () { return { ok: r.ok, data: {} }; }); })
     .then(function (res) {
       clearTimeout(clientTimer);
       if (gen !== photoGen) return;
@@ -592,7 +639,8 @@ function identify(gen, wantLoc, pos, tryNo) {
       /* A connection that drops at once usually works a moment later. One more try, not more:
          after 5 s the photo may already be with the worker, and a second copy would be a duplicate. */
       if (name === "NetFail" && tryNo === 1 && Date.now() - sentAt < 5000) {
-        result.innerHTML = '<p class="loading">Connection dropped. Trying again&hellip;</p>';
+        /* The second try starts over at the bot check, so the dots go back to step 2. */
+        showStep(2, "Connection dropped. Trying again…");
         setTimeout(function () { if (gen === photoGen) identify(gen, wantLoc, pos, 2); }, 1500);
         return;
       }
