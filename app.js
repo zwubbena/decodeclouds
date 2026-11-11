@@ -342,9 +342,11 @@ function shrink(dataUrl, maxEdge, cb) {
   img.onerror = function () { fin(dataUrl, mime); };
   img.src = dataUrl;
 }
-/* EXIF in plain JS: camera date, its time-zone offset, GPS, camera make and model. Read from the
-   original file, because the shrink below re-encodes the image and drops all of this. Note that
-   iPhone Safari removes the GPS block from photos a web page picks, so lat/lon is rarely present. */
+/* EXIF in plain JS: camera date, its time-zone offset, GPS, camera make and model, the camera
+   settings (exposure time, aperture, ISO, focal length, lens), the compass direction the camera faced
+   and the orientation. Read from the original file, because the shrink below re-encodes the image and
+   drops all of this. Note that iPhone Safari removes the GPS block from photos a web page picks, so
+   lat/lon is rarely present; the camera direction sits in the same block. */
 function readExif(dataUrl) {
   var out = {};
   try {
@@ -386,14 +388,23 @@ function readExif(dataUrl) {
       0x010F: function (v) { out.make = v.trim(); }, 0x0110: function (v) { out.model = v.trim(); }, 0x0112: function (v) { out.orientation = v; },
       0x8769: function (v) { exifOff = v; }, 0x8825: function (v) { gpsOff = v; }
     });
-    if (exifOff) readIfd(tiff + exifOff, { 0x9003: function (v) { out.dateTime = v; }, 0x9011: function (v) { out.offset = v.trim(); } });
+    /* A tag's value arrives as a number or, for a fraction, as a list holding the number. */
+    var one = function (v) { return typeof v === "number" ? v : (v && v.length ? v[0] : NaN); };
+    if (exifOff) readIfd(tiff + exifOff, {
+      0x9003: function (v) { out.dateTime = v; }, 0x9011: function (v) { out.offset = v.trim(); },
+      0x829A: function (v) { out.exposure = one(v); }, 0x829D: function (v) { out.fNumber = one(v); }, 0x8827: function (v) { out.iso = one(v); },
+      0x920A: function (v) { out.focal = one(v); }, 0xA434: function (v) { if (typeof v === "string") out.lens = v.trim(); }
+    });
     if (gpsOff) {
-      var latRef = "N", lonRef = "E", lat = null, lon = null, altRef = 0, alt = null;
-      readIfd(tiff + gpsOff, { 1: function (v) { latRef = v; }, 2: function (v) { lat = v; }, 3: function (v) { lonRef = v; }, 4: function (v) { lon = v; }, 5: function (v) { altRef = v; }, 6: function (v) { alt = v; } });
+      var latRef = "N", lonRef = "E", lat = null, lon = null, altRef = 0, alt = null, dirRef = "", dir = null;
+      readIfd(tiff + gpsOff, { 1: function (v) { latRef = v; }, 2: function (v) { lat = v; }, 3: function (v) { lonRef = v; }, 4: function (v) { lon = v; }, 5: function (v) { altRef = v; }, 6: function (v) { alt = v; },
+        16: function (v) { dirRef = v; }, 17: function (v) { dir = v; } });
       var dms = function (a) { return a && a.length >= 3 ? a[0] + a[1] / 60 + a[2] / 3600 : NaN; };
       var la = dms(lat), lo = dms(lon);
       if (isFinite(la) && isFinite(lo) && (la !== 0 || lo !== 0) && la <= 90 && lo <= 180) { out.lat = (latRef.charAt(0) === "S" ? -1 : 1) * la; out.lon = (lonRef.charAt(0) === "W" ? -1 : 1) * lo; }
       if (alt && alt.length && isFinite(alt[0])) out.altitude = (altRef === 1 ? -1 : 1) * alt[0];
+      /* Compass direction the camera faced, in degrees; the reference is T (true north) or M (magnetic north). */
+      if (dir && dir.length && isFinite(dir[0]) && dir[0] >= 0 && dir[0] <= 360) { out.direction = dir[0]; var ref = String(dirRef).charAt(0); if (ref === "T" || ref === "M") out.directionRef = ref; }
     }
   } catch (e) {}
   return out;
@@ -588,6 +599,15 @@ function identify(gen, wantLoc, pos, tryNo) {
       if (exifInfo) {
         if (typeof exifInfo.lat === "number") { payload.lat = exifInfo.lat; payload.lon = exifInfo.lon; payload.locSource = "exif"; if (typeof exifInfo.altitude === "number") payload.altitudeM = exifInfo.altitude; locSent = "exif"; }
         if (exifInfo.make) payload.cameraMake = exifInfo.make; if (exifInfo.model) payload.cameraModel = exifInfo.model;
+        /* The camera settings, the direction the camera faced and the orientation, when the photo carries them. */
+        var has = function (v) { return typeof v === "number" && isFinite(v); };
+        if (has(exifInfo.exposure)) payload.exposureTimeS = exifInfo.exposure;
+        if (has(exifInfo.fNumber)) payload.fNumber = exifInfo.fNumber;
+        if (has(exifInfo.iso)) payload.iso = exifInfo.iso;
+        if (has(exifInfo.focal)) payload.focalLengthMm = exifInfo.focal;
+        if (exifInfo.lens) payload.lensModel = exifInfo.lens;
+        if (has(exifInfo.direction)) { payload.cameraDirectionDeg = exifInfo.direction; if (exifInfo.directionRef) payload.cameraDirectionRef = exifInfo.directionRef; }
+        if (has(exifInfo.orientation)) payload.orientation = exifInfo.orientation;
       }
       if (!payload.lat && wantLoc) {
         if (pos && typeof pos.latitude === "number") {
