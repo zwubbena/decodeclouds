@@ -126,6 +126,48 @@ var FEATURE = { fallstreak_hole: "Fallstreak hole (hole punch cloud)" };
 
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
 function p2(n) { return (n < 10 ? "0" : "") + n; }
+/* ---- Error messages. Each one ends with a code, and the first digit of the code names the side:
+   1 = your conditions (your photo, your device or browser, your connection); 2 = the web application
+   (DecodeClouds or a service DecodeClouds runs on). docs/messages.csv lists every message, the User
+   Guide prints that list, and worker/test/messages-check.cjs fails when a message here is not in it. */
+var ERR = {
+  format:   ["11", "That photo format isn’t supported. Please use a JPEG or PNG."],
+  large:    ["12", "Image is too large. Please use a photo under 7 MB."],
+  box:      ["13", "The box wasn’t ticked in time. Try again."],
+  rate:     ["14", "Too many requests. Please wait a moment and try again."],
+  offline:  ["15", "Couldn’t connect. Check your signal and try again."],
+  slowYou:  ["16", "Sorry it took too long. Check your signal and try again."],
+  person:   ["17", "Couldn’t confirm you’re a person. Reload the page and try again."],
+  lateFlag: ["18", "Too late to flag this one."],
+  server:   ["21", "Your connection works, but the DecodeClouds server can’t be reached. Try again in a few minutes."],
+  slowUs:   ["22", "Sorry it took too long. Do me a favor. Try again."],
+  analyze:  ["23", "DecodeClouds could not analyze the photo. The problem is on our side. Try again."],
+  botDown:  ["24", "The bot check is unavailable right now. Please try again in a moment."],
+  setup:    ["25", "DecodeClouds could not run the bot check. The problem is on our side. Try again later."],
+  refused:  ["26", "Couldn’t confirm you’re a person. Reload the page and try again."],
+  flagSave: ["27", "Couldn’t save. Try again."],
+  odd:      ["29", "Couldn’t read that one. Try another photo."]
+};
+/* The Worker names each refusal with an id. The page shows its own words and code for that id. */
+var WORKER_ERR = { unsupported_type: "format", image_too_large: "large", rate_limited: "rate", timeout: "slowUs", server_error: "analyze", bot_check_unavailable: "botDown", bot_check_failed: "refused" };
+/* Cloudflare's codes for a site key or hostname that is set up wrongly: the web application's side. */
+var TS_SETUP = ["110100", "110110", "110200", "400020", "400021", "400070"];
+/* "Words. (Code 23)", or "Words. (Code 17-600010)" when Cloudflare's own code or word follows. */
+function errLine(key, detail, words) { var e = ERR[key]; return (words || e[1]) + " (Code " + e[0] + (detail ? "-" + detail : "") + ")"; }
+function errHtml(key, detail, words) { return '<p class="err">' + esc(errLine(key, detail, words)) + "</p>"; }
+/* Asked after a photo could not be sent or no answer came back: does decodeclouds.com itself still
+   answer? Yes means the visitor's connection works, so the trouble is on the web application's side.
+   Resolves true or false within 5 s; never rejects. */
+function connectionWorks() {
+  return new Promise(function (resolve) {
+    var done = false;
+    function fin(v) { if (!done) { done = true; resolve(v); } }
+    setTimeout(function () { fin(false); }, 5000);
+    try {
+      fetch("/robots.txt?t=" + Date.now(), { method: "HEAD", cache: "no-store" }).then(function (r) { fin(!!r.ok); }, function () { fin(false); });
+    } catch (e) { fin(false); }
+  });
+}
 var CONF_LABEL = { high: "high confidence", medium: "medium confidence", low: "low confidence" };
 function confHtml(c) {
   if (!Object.prototype.hasOwnProperty.call(CONF_LABEL, c)) return "";
@@ -203,7 +245,13 @@ function archiveHtml() {
 }
 function postFlag(payload) {
   return getTurnstileToken()
-    .then(function (token) { payload.turnstile = token; return fetch(ARCHIVE_URL + "/flag", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) }); })
+    .then(function (token) {
+      /* No token means the Worker would refuse the flag, so it is not sent. */
+      if (!token && TURNSTILE_SITEKEY) throw { name: "NoToken" };
+      payload.turnstile = token;
+      return fetch(ARCHIVE_URL + "/flag", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) })
+        .catch(function () { throw { name: "NetFail" }; });
+    })
     .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, data: j }; }, function () { return { ok: r.ok, data: {} }; }); });
 }
 /* A flag icon: one click reports that result as a misidentification; clicking the filled flag
@@ -220,10 +268,21 @@ function flagResult(e) {
     .then(function (res) {
       if (gen !== photoGen) return;
       flagBusy[type] = false;
-      if (!res.ok || !res.data || !res.data.ok) { setFlag(btn, undo); showTip(btn, "Couldn’t save. Try again.", true); return; }
+      if (!res.ok || !res.data || !res.data.ok) {
+        /* Not saved. The bubble is small, so it keeps short words; the code says why (same codes as above). */
+        var why = res.data && res.data.error, code = why === "rate_limited" ? "14" : why === "bot_check_failed" ? "26" : why === "bot_check_unavailable" ? "24" : "27";
+        setFlag(btn, undo);
+        showTip(btn, why === "expired" ? errLine("lateFlag") : ERR.flagSave[1] + " (Code " + code + ")", true);
+        return;
+      }
       flaggedTypes[type] = !undo;
     })
-    .catch(function () { if (gen !== photoGen) return; flagBusy[type] = false; setFlag(btn, undo); showTip(btn, "Couldn’t connect. Try again.", true); });
+    .catch(function (err) {
+      if (gen !== photoGen) return;
+      flagBusy[type] = false; setFlag(btn, undo);
+      if (err && err.name === "NoToken") { showTip(btn, ERR.flagSave[1] + " (Code 17)", true); return; }
+      connectionWorks().then(function (works) { if (gen === photoGen) showTip(btn, "Couldn’t connect. Try again. (Code " + (works ? "21" : "15") + ")", true); });
+    });
 }
 /* A short confirmation, then nothing: the hover label stays hidden until the pointer leaves the flag. */
 function showTip(btn, text, isError) {
@@ -232,7 +291,7 @@ function showTip(btn, text, isError) {
   btn._tipTimer = setTimeout(function () {
     btn.classList.remove("show-tip", "tip-err");
     btn.setAttribute("data-tip", btn.classList.contains("flagged") ? TIP_ON : TIP_OFF);
-  }, isError ? 2200 : 1200);
+  }, isError ? 4000 : 1200); /* an error stays long enough to read its code */
 }
 
 /* ---- "Add my location" (upload card): asked for when Identify clouds is clicked, sent with the photo. ---- */
@@ -501,7 +560,14 @@ function identify(gen, wantLoc, pos, tryNo) {
       clearTimeout(clientTimer);
       if (gen !== photoGen) return;
       inFlight = null;
-      if (!res || !res.ok) { unlockIdentify(); result.innerHTML = '<p class="err">' + esc((res && res.data && res.data.message) || "Couldn’t read that one. Try another photo.") + "</p>"; return; }
+      if (!res || !res.ok) {
+        /* The Worker refused. Its id picks the page's words and code; for an id the page does not know,
+           the Worker's own words are shown under the code for the unexpected. */
+        var refusal = (res && res.data) || {}, key = WORKER_ERR[refusal.error];
+        unlockIdentify();
+        result.innerHTML = key ? errHtml(key) : errHtml("odd", "", typeof refusal.message === "string" ? refusal.message : "");
+        return;
+      }
       var d = res.data || {};
       go.disabled = true; go.textContent = d.notSky || d.rejected ? "Done" : "Identified";
       if (d.rejected) {
@@ -530,13 +596,19 @@ function identify(gen, wantLoc, pos, tryNo) {
         setTimeout(function () { if (gen === photoGen) identify(gen, wantLoc, pos, 2); }, 1500);
         return;
       }
-      unlockIdentify();
-      var why = name === "NoToken" ? err.why : "";
-      result.innerHTML = '<p class="err">' + (
-        name === "AbortError" ? "Sorry it took too long. Do me a favor. Try again." :
-        why === "interaction" ? "The box wasn’t ticked in time. Try again." :
-        why && why !== "script" ? "Couldn’t confirm you’re a person. Reload the page and try again. (Code " + esc(why) + ")" :
-        "Couldn’t connect. Check your signal and try again.") + "</p>";
+      var why = name === "NoToken" ? String(err.why || "unknown") : "";
+      function show(key, detail) { if (gen !== photoGen) return; unlockIdentify(); result.innerHTML = errHtml(key, detail); }
+      if (why === "interaction") return show("box");
+      if (TS_SETUP.indexOf(why) !== -1) return show("setup", why);
+      if (why && why !== "script" && why !== "timeout") return show("person", why);
+      /* Anything else that is not a network failure or a time-out is a fault in the page itself. */
+      if (!why && name !== "NetFail" && name !== "AbortError") return show("odd");
+      /* The rest turns on one question: does the visitor's own connection still work? */
+      connectionWorks().then(function (works) {
+        if (why) show(works ? "person" : "offline", works ? why : "");
+        else if (name === "AbortError") show(works ? "slowUs" : "slowYou");
+        else show(works ? "server" : "offline");
+      });
     });
 }
 
